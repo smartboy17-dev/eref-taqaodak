@@ -125,47 +125,53 @@ export const psAtDate = (periods, targetDate) => {
 };
 
 // ── سيناريوهات التحسين ─────────────────────────────────────────────
-// يحسب تأثير إضافة أشهر بأجر معين على المعاش
-export const calcScenarios = (ps, currentSalary, basePension) => {
+export const calcScenarios = (ps, currentSalary, basePension, deps = 0) => {
   const scenarios = [];
-  const addMonthsList = [6, 12, 18, 24, 36, 48, 60, 84, 120];
-  const salaryBumps = [0, 500, 1000, 2000, 3000, 5000];
 
-  addMonthsList.forEach(addM => {
+  // سيناريوهات إضافة أشهر (يستمر في العمل بنفس الراتب)
+  [6, 12, 18, 24, 36, 48, 60, 84, 120].forEach(addM => {
     const newPs = { ...ps, nM: ps.nM + addM, tM: ps.tM + addM };
-    const newPen = penCalc(newPs, currentSalary);
-    const delta = +(newPen.f - basePension).toFixed(0);
+    const newPen = penCalc(newPs, currentSalary, deps);
+    const delta = Math.round(newPen.f - basePension);
     if (delta > 0) {
+      // التكلفة: ما يدفعه الموظف (9% من راتبه)
+      const monthlyCost = Math.round(currentSalary * 0.09);
+      // الفائدة السنوية = المعاش الإضافي × 12 شهراً
+      const annualGain = delta * 12;
+      // نقطة التعادل: بعد كم شهر تسترد ما دفعته
+      const breakEvenMonths = delta > 0 ? Math.ceil((monthlyCost * addM) / delta) : null;
       scenarios.push({
+        type: 'months',
         addM,
         addY: +(addM / 12).toFixed(1),
-        newPension: newPen.f,
+        newPension: Math.round(newPen.f),
         delta,
-        salary: currentSalary,
-        costPerMonth: Math.round(currentSalary * 0.09),
-        totalCost: Math.round(currentSalary * 0.09 * addM),
+        monthlyCost,
+        totalCost: monthlyCost * addM,
+        annualGain,
+        breakEvenMonths,
       });
     }
   });
 
   // سيناريوهات رفع الراتب
-  salaryBumps.filter(b => b > 0).forEach(bump => {
+  [500, 1000, 2000, 3000, 5000].forEach(bump => {
     const newSalary = Math.min(currentSalary + bump, 45000);
-    const newPen = penCalc(ps, newSalary);
-    const delta = +(newPen.f - basePension).toFixed(0);
-    if (delta > 0 && newSalary > currentSalary) {
+    if (newSalary <= currentSalary) return;
+    const newPen = penCalc(ps, newSalary, deps);
+    const delta = Math.round(newPen.f - basePension);
+    if (delta > 0) {
       scenarios.push({
-        addM: 0,
+        type: 'salary',
         salaryBump: bump,
         newSalary,
-        newPension: newPen.f,
+        newPension: Math.round(newPen.f),
         delta,
-        type: 'salary',
       });
     }
   });
 
-  return scenarios.slice(0, 10);
+  return scenarios;
 };
 
 // ── تنسيق الأرقام ──────────────────────────────────────────────────

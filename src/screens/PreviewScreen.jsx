@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Animated, Dimensions, BlurView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Animated, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArcProgress, BarChart } from '../components/PensionChart';
 import { fI, fMD } from '../utils/pension';

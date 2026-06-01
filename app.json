@@ -7,27 +7,51 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0F172A",
+    "primaryColor": "#F59E0B",
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
     "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.saud.ereftaqaodak",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "لالتقاط صورة الوثائق",
+        "CFBundleAllowMixedLocalizations": true
       }
     },
+    "android": {
+      "package": "com.saud.ereftaqaodak",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "backgroundColor": "#0F172A"
+      },
+      "permissions": []
+    },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "lang": "ar",
+      "dir": "rtl"
+    },
+    "extra": {
+      "moyasarPublishableKey": "pk_test_REPLACE_WITH_YOUR_KEY",
+      "reportPriceSAR": 9.99
     },
     "plugins": [
       "expo-sharing",
       "expo-web-browser",
-      "expo-splash-screen"
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F172A",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ]
     ]
   }
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Animated, StatusBar, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
 
@@ -64,11 +65,11 @@ export default function WelcomeScreen({ navigation }) {
         </View>
 
         {/* أزرار البداية */}
-        <TouchableOpacity style={s.btnPrimary} onPress={() => navigation.navigate('Input')} activeOpacity={0.85}>
+        <TouchableOpacity style={s.btnPrimary} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.navigate('Input'); }} activeOpacity={0.85}>
           <Text style={s.btnPrimaryText}>ابدأ الاحتساب الآن ←</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.btnDemo} onPress={() => navigation.navigate('Input', { demo: true })} activeOpacity={0.8}>
+        <TouchableOpacity style={s.btnDemo} onPress={() => { Haptics.selectionAsync(); navigation.navigate('Input', { demo: true }); }} activeOpacity={0.8}>
           <Text style={s.btnDemoText}>تجربة مجانية بدون دفع</Text>
         </TouchableOpacity>
 
@@ -93,7 +94,7 @@ const s = StyleSheet.create({
   tagline: { fontSize: 16, fontWeight: '700', color: '#F1F5F9', marginBottom: 10 },
   subtitle: { fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 22 },
 
-  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24, direction: 'ltr' },
   featureCard: { width: (width - 50) / 2, backgroundColor: '#1E293B', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' },
   featureIcon: { fontSize: 24, marginBottom: 8 },
   featureTitle: { fontSize: 13, fontWeight: '800', color: '#F1F5F9', marginBottom: 4 },

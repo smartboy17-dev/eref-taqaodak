@@ -38,9 +38,9 @@ export default function ReportScreen({ navigation, route }) {
 
   const earlyNeed = Math.max(0, ri.eR - ps.tM);
   const earlyOk = earlyNeed === 0;
-  const scenarios = calcScenarios(ps, salary, pen.f);
-  const monthScenarios = scenarios.filter(s => s.addM > 0).slice(0, 6);
-  const salScenarios = scenarios.filter(s => s.type === 'salary').slice(0, 4);
+  const scenarios = calcScenarios(ps, salary, pen.f, deps);
+  const monthScenarios = scenarios.filter(sc => sc.type === 'months').slice(0, 6);
+  const salScenarios = scenarios.filter(sc => sc.type === 'salary').slice(0, 4);
 
   // بيانات الرسوم البيانية
   const pensionBars = [
@@ -150,10 +150,11 @@ export default function ReportScreen({ navigation, route }) {
                 <View style={s.scenarioLeft}>
                   <Text style={s.scenarioAdd}>+ {sc.addM >= 12 ? `${sc.addY} سنة` : `${sc.addM} شهر`}</Text>
                   <Text style={s.scenarioCost}>تكلفة: {fI(sc.totalCost)} ر.س</Text>
+                  {sc.breakEvenMonths && <Text style={s.scenarioBreak}>⚖️ نقطة تعادل: {sc.breakEvenMonths} شهر</Text>}
                 </View>
                 <View style={s.scenarioRight}>
                   <Text style={s.scenarioDelta}>+{fI(sc.delta)} ر.س/شهر</Text>
-                  <Text style={s.scenarioNew}>{fI(sc.newPension)} ر.س إجمالي</Text>
+                  <Text style={s.scenarioNew}>{fI(sc.newPension)} ر.س</Text>
                 </View>
               </View>
             ))}
@@ -299,6 +300,7 @@ const s = StyleSheet.create({
   scenarioRight: { alignItems: 'flex-end' },
   scenarioDelta: { fontSize: 15, fontWeight: '900', color: '#10B981', marginBottom: 2 },
   scenarioNew: { fontSize: 10, color: '#64748B' },
+  scenarioBreak: { fontSize: 9, color: '#8B5CF6', marginTop: 2 },
 
   disclaimer: { backgroundColor: '#1E293B', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155', borderRightWidth: 3, borderRightColor: '#F59E0B' },
   disclaimerTxt: { fontSize: 11, color: '#64748B', lineHeight: 19 },
