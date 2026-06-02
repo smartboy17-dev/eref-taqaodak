@@ -7,7 +7,8 @@ import { BarChart, DonutChart, GaugeMeter, AreaChart } from '../components/Pensi
 import { calcScenarios, calcTimeline, fI, fMD, fmt } from '../utils/pension';
 
 const { width } = Dimensions.get('window');
-const gold = '#F59E0B';
+const gold = '#F59E0B'; // الأرقام المالية تبقى ذهبية
+const indigo = '#6366F1'; // لون واجهة UI
 const grn = '#10B981';
 const blu = '#3B82F6';
 const pur = '#8B5CF6';
@@ -108,7 +109,7 @@ export default function ReportScreen({ navigation, route }) {
               <Text style={s.heroPillLbl}>ر.س / سنة</Text>
             </View>
           </View>
-          <View style={[s.statusBadge, { backgroundColor: earlyOk ? '#10B98120' : '#F59E0B20' }]}>
+          <View style={[s.statusBadge, { backgroundColor: earlyOk ? '#10B98120' : '#6366F120' }]}>
             <Text style={[s.statusTxt, { color: earlyOk ? grn : gold }]}>
               {earlyOk ? '✅ مؤهل للتقاعد المبكر' : `⏳ متبقي ${fI(earlyNeed)} شهر للتقاعد المبكر`}
             </Text>
@@ -387,41 +388,41 @@ function buildReportHTML({ ps, ri, pen, salary, deps, bd, rd, ageG, ageH, scenar
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0F172A' },
+  safe: { flex: 1, backgroundColor: '#07091C' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#111830', alignItems: 'center', justifyContent: 'center' },
   backTxt: { color: '#94A3B8', fontSize: 18 },
-  headerTitle: { fontSize: 15, fontWeight: '700', color: '#F1F5F9' },
-  exportBtn: { backgroundColor: '#1E293B', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#334155' },
-  exportTxt: { fontSize: 12, color: '#F59E0B', fontWeight: '700' },
+  headerTitle: { fontSize: 15, fontFamily: 'Cairo_700Bold', color: '#F1F5F9' },
+  exportBtn: { backgroundColor: '#111830', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#1C2848' },
+  exportTxt: { fontSize: 12, color: '#6366F1', fontFamily: 'Cairo_700Bold' },
   scroll: { padding: 20, paddingBottom: 50 },
 
-  heroCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 20, alignItems: 'center', marginBottom: 14, borderWidth: 1.5, borderColor: '#F59E0B30', shadowColor: '#F59E0B', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+  heroCard: { backgroundColor: '#111830', borderRadius: 24, padding: 20, alignItems: 'center', marginBottom: 14, borderWidth: 1.5, borderColor: '#6366F130', shadowColor: '#6366F1', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
   heroSubtitle: { fontSize: 11, color: '#94A3B8', letterSpacing: 1.5, marginBottom: 4 },
-  heroPills: { flexDirection: 'row', alignItems: 'center', width: '100%', backgroundColor: '#0F172A', borderRadius: 14, paddingVertical: 14, marginVertical: 10, borderWidth: 1, borderColor: '#334155' },
+  heroPills: { flexDirection: 'row', alignItems: 'center', width: '100%', backgroundColor: '#07091C', borderRadius: 14, paddingVertical: 14, marginVertical: 10, borderWidth: 1, borderColor: '#1C2848' },
   heroPill: { flex: 1, alignItems: 'center' },
-  heroPillNum: { fontSize: 18, fontWeight: '900', color: '#F59E0B', marginBottom: 2 },
+  heroPillNum: { fontSize: 18, fontFamily: 'Cairo_900Black', color: '#F59E0B', marginBottom: 2 },
   heroPillLbl: { fontSize: 9, color: '#64748B', textAlign: 'center' },
-  heroPillSep: { width: 1, height: 34, backgroundColor: '#334155' },
+  heroPillSep: { width: 1, height: 34, backgroundColor: '#1C2848' },
   statusBadge: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
-  statusTxt: { fontSize: 12, fontWeight: '700' },
-  benchKpi: { flex: 1, backgroundColor: '#0F172A', borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1 },
+  statusTxt: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
+  benchKpi: { flex: 1, backgroundColor: '#07091C', borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1 },
   benchKpiIcon: { fontSize: 18, marginBottom: 4 },
-  benchKpiVal: { fontSize: 22, fontWeight: '900', marginBottom: 2 },
+  benchKpiVal: { fontSize: 22, fontFamily: 'Cairo_900Black', marginBottom: 2 },
   benchKpiLbl: { fontSize: 9, color: '#64748B', textAlign: 'center', marginBottom: 4 },
-  benchKpiNote: { fontSize: 9, fontWeight: '700', textAlign: 'center' },
+  benchKpiNote: { fontSize: 9, fontFamily: 'Cairo_700Bold', textAlign: 'center' },
   timelineLegend: { marginTop: 10, gap: 6 },
 
-  section: { backgroundColor: '#1E293B', borderRadius: 18, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: '#334155' },
+  section: { backgroundColor: '#111830', borderRadius: 18, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: '#1C2848' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   sectionIcon: { fontSize: 18 },
-  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#F1F5F9' },
+  sectionTitle: { fontSize: 14, fontFamily: 'Cairo_700Bold', color: '#F1F5F9' },
 
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: '#0F172A' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: '#07091C' },
   rowLabel: { fontSize: 12, color: '#94A3B8', flex: 1, lineHeight: 18 },
-  rowValue: { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  rowValue: { fontSize: 13, fontFamily: 'Cairo_700Bold', textAlign: 'right' },
   rowSub: { fontSize: 10, color: '#64748B', textAlign: 'right', marginTop: 2 },
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 8 },
+  divider: { height: 1, backgroundColor: '#1C2848', marginVertical: 8 },
 
   donutRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   donutLegend: { flex: 1 },
@@ -430,33 +431,33 @@ const s = StyleSheet.create({
   legendTxt: { fontSize: 12, color: '#CBD5E1' },
 
   scenarioNote: { fontSize: 11, color: '#64748B', marginBottom: 12, lineHeight: 18 },
-  scenarioCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0F172A', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#334155' },
+  scenarioCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#07091C', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#1C2848' },
   scenarioLeft: {},
-  scenarioAdd: { fontSize: 13, fontWeight: '800', color: '#F1F5F9', marginBottom: 3 },
+  scenarioAdd: { fontSize: 13, fontFamily: 'Cairo_700Bold', color: '#F1F5F9', marginBottom: 3 },
   scenarioCost: { fontSize: 10, color: '#64748B' },
   scenarioRight: { alignItems: 'flex-end' },
-  scenarioDelta: { fontSize: 15, fontWeight: '900', color: '#10B981', marginBottom: 2 },
+  scenarioDelta: { fontSize: 15, fontFamily: 'Cairo_900Black', color: '#10B981', marginBottom: 2 },
   scenarioNew: { fontSize: 10, color: '#64748B' },
   scenarioBreak: { fontSize: 9, color: '#8B5CF6', marginTop: 2 },
 
   recCard: { backgroundColor: '#10B98112', borderRadius: 16, padding: 14, marginBottom: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderWidth: 1, borderColor: '#10B98130', borderRightWidth: 3, borderRightColor: '#10B981' },
   recIcon: { fontSize: 22, marginTop: 1 },
   recBody: { flex: 1 },
-  recTitle: { fontSize: 13, fontWeight: '800', color: '#10B981', marginBottom: 4 },
+  recTitle: { fontSize: 13, fontFamily: 'Cairo_700Bold', color: '#10B981', marginBottom: 4 },
   recSub: { fontSize: 11, color: '#6EE7B7', lineHeight: 18 },
 
   gapRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 9, gap: 6 },
   gapLabel: { fontSize: 9, color: '#94A3B8', width: 56, textAlign: 'right' },
-  gapTrack: { flex: 1, height: 18, backgroundColor: '#0F172A', borderRadius: 4, overflow: 'hidden', position: 'relative' },
+  gapTrack: { flex: 1, height: 18, backgroundColor: '#07091C', borderRadius: 4, overflow: 'hidden', position: 'relative' },
   gapFill: { height: '100%', borderRadius: 4, opacity: 0.8 },
   gapMark: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: '#10B981' },
-  gapVal: { fontSize: 11, fontWeight: '800', width: 46, textAlign: 'right' },
-  gapPct: { fontSize: 9, fontWeight: '700', width: 28, textAlign: 'right' },
+  gapVal: { fontSize: 11, fontFamily: 'Cairo_700Bold', width: 46, textAlign: 'right' },
+  gapPct: { fontSize: 9, fontFamily: 'Cairo_700Bold', width: 28, textAlign: 'right' },
   gapNote: { fontSize: 9, color: '#475569', textAlign: 'center', marginTop: 6 },
 
-  disclaimer: { backgroundColor: '#1E293B', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155', borderRightWidth: 3, borderRightColor: '#F59E0B' },
+  disclaimer: { backgroundColor: '#111830', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#1C2848', borderRightWidth: 3, borderRightColor: '#6366F1' },
   disclaimerTxt: { fontSize: 11, color: '#64748B', lineHeight: 19 },
 
-  recalcBtn: { borderWidth: 1.5, borderColor: '#334155', borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
-  recalcTxt: { fontSize: 14, fontWeight: '700', color: '#94A3B8' },
+  recalcBtn: { borderWidth: 1.5, borderColor: '#1C2848', borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
+  recalcTxt: { fontSize: 14, fontFamily: 'Cairo_700Bold', color: '#94A3B8' },
 });

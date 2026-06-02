@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import Svg, { G, Rect, Line, Text as SvgText, Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-const gold = '#F59E0B';
+const gold = '#F59E0B';  // أرقام مالية
 const gold2 = '#D97706';
 const blu = '#3B82F6';
 const grn = '#10B981';
 const pur = '#8B5CF6';
+const indigo = '#6366F1'; // لون UI الأساسي
 const txt2 = '#94A3B8';
-const brd = '#1E293B';
+const brd = '#111830';
 
 // ── مخطط الأعمدة ──────────────────────────────────────────────────
 export function BarChart({ bars, width = 320, height = 180 }) {

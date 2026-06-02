@@ -6,6 +6,7 @@ import { fI, fMD } from '../utils/pension';
 
 const { width } = Dimensions.get('window');
 const gold = '#F59E0B';
+const indigo = '#6366F1';
 
 export default function PreviewScreen({ navigation, route }) {
   const { ps, ri, pen, salary, deps, bd, rd, ageG, ageH, ageNowG, periods, isDemo } = route.params;
@@ -20,7 +21,7 @@ export default function PreviewScreen({ navigation, route }) {
   const totalMonths = Math.round(ps.tM);
   const readinessPct = Math.min(ps.tM / ri.eR, 1);
   const benchmarkPct = Math.round((pen.f / salary) * 100);
-  const benchmarkColor = benchmarkPct >= 70 ? '#10B981' : benchmarkPct >= 50 ? '#F59E0B' : '#EF4444';
+  const benchmarkColor = benchmarkPct >= 70 ? '#10B981' : benchmarkPct >= 50 ? '#6366F1' : '#EF4444';
 
   const handleBuy = () => {
     if (isDemo) {
@@ -52,7 +53,7 @@ export default function PreviewScreen({ navigation, route }) {
             </View>
             <Text style={s.pensionYearly}>سنوياً: {fI(pen.f * 12)} ر.س</Text>
             <View style={s.earlyBadge}>
-              <Text style={[s.earlyTxt, { color: earlyOk ? '#10B981' : '#F59E0B' }]}>
+              <Text style={[s.earlyTxt, { color: earlyOk ? '#10B981' : '#6366F1' }]}>
                 {earlyOk ? '✅ مؤهل للتقاعد المبكر' : `⏳ تحتاج ${fI(earlyNeed)} شهر للتقاعد المبكر`}
               </Text>
             </View>
@@ -151,48 +152,48 @@ export default function PreviewScreen({ navigation, route }) {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0F172A' },
+  safe: { flex: 1, backgroundColor: '#07091C' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#111830', alignItems: 'center', justifyContent: 'center' },
   backTxt: { color: '#94A3B8', fontSize: 18 },
-  headerTitle: { fontSize: 15, fontWeight: '700', color: '#F1F5F9' },
-  previewBadge: { backgroundColor: '#F59E0B20', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: '#F59E0B40' },
-  previewBadgeTxt: { fontSize: 11, color: '#F59E0B', fontWeight: '700' },
+  headerTitle: { fontSize: 15, fontFamily: 'Cairo_700Bold', color: '#F1F5F9' },
+  previewBadge: { backgroundColor: '#6366F120', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: '#6366F140' },
+  previewBadgeTxt: { fontSize: 11, color: '#6366F1', fontFamily: 'Cairo_700Bold' },
   scroll: { padding: 20, paddingBottom: 50 },
 
-  pensionHero: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, marginBottom: 16, alignItems: 'center', borderWidth: 1.5, borderColor: '#F59E0B30', shadowColor: '#F59E0B', shadowOpacity: 0.15, shadowRadius: 16, elevation: 6 },
+  pensionHero: { backgroundColor: '#111830', borderRadius: 24, padding: 24, marginBottom: 16, alignItems: 'center', borderWidth: 1.5, borderColor: '#6366F130', shadowColor: '#6366F1', shadowOpacity: 0.15, shadowRadius: 16, elevation: 6 },
   heroLabel: { fontSize: 12, color: '#94A3B8', letterSpacing: 1.5, marginBottom: 8 },
   pensionRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 },
-  pensionVal: { fontSize: 52, fontWeight: '900', color: '#F59E0B' },
-  pensionCur: { fontSize: 15, color: '#D97706', fontWeight: '600' },
+  pensionVal: { fontSize: 52, fontFamily: 'Cairo_900Black', color: '#F59E0B' },
+  pensionCur: { fontSize: 15, color: '#D97706', fontFamily: 'Cairo_600SemiBold' },
   pensionYearly: { fontSize: 12, color: '#64748B', marginBottom: 14 },
-  earlyBadge: { backgroundColor: '#0F172A', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
-  earlyTxt: { fontSize: 12, fontWeight: '700' },
+  earlyBadge: { backgroundColor: '#07091C', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
+  earlyTxt: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
 
   gaugeSection: { alignItems: 'center', marginBottom: 16 },
-  gaugePills: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0, backgroundColor: '#1E293B', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, marginTop: 4, borderWidth: 1, borderColor: '#334155', width: '100%' },
+  gaugePills: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0, backgroundColor: '#111830', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, marginTop: 4, borderWidth: 1, borderColor: '#1C2848', width: '100%' },
   gaugePill: { flex: 1, alignItems: 'center' },
-  gaugePillNum: { fontSize: 20, fontWeight: '900', color: '#F59E0B', marginBottom: 2 },
+  gaugePillNum: { fontSize: 20, fontFamily: 'Cairo_900Black', color: '#6366F1', marginBottom: 2 },
   gaugePillLbl: { fontSize: 9, color: '#64748B', textAlign: 'center' },
-  gaugePillSep: { width: 1, height: 36, backgroundColor: '#334155' },
+  gaugePillSep: { width: 1, height: 36, backgroundColor: '#1C2848' },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
-  statCard: { width: (width - 50) / 2, backgroundColor: '#1E293B', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
+  statCard: { width: (width - 50) / 2, backgroundColor: '#111830', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1C2848', alignItems: 'center' },
   statIcon: { fontSize: 20, marginBottom: 6 },
-  statVal: { fontSize: 16, fontWeight: '900', color: '#F59E0B', marginBottom: 3 },
+  statVal: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#6366F1', marginBottom: 3 },
   statLbl: { fontSize: 10, color: '#64748B', textAlign: 'center' },
 
-  lockCard: { backgroundColor: '#1E293B', borderRadius: 20, padding: 20, borderWidth: 1.5, borderColor: '#334155' },
-  lockTitle: { fontSize: 15, fontWeight: '800', color: '#F1F5F9', marginBottom: 14 },
+  lockCard: { backgroundColor: '#111830', borderRadius: 20, padding: 20, borderWidth: 1.5, borderColor: '#1C2848' },
+  lockTitle: { fontSize: 15, fontFamily: 'Cairo_700Bold', color: '#F1F5F9', marginBottom: 14 },
   lockFeatures: { marginBottom: 18 },
-  lockRow: { paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#0F172A' },
+  lockRow: { paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#07091C' },
   lockFeatureTxt: { fontSize: 13, color: '#CBD5E1' },
 
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  priceLabel: { fontSize: 15, fontWeight: '700', color: '#F1F5F9' },
-  priceBadge: { backgroundColor: '#F59E0B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
-  priceAmt: { fontSize: 16, fontWeight: '900', color: '#0F172A' },
-  buyBtn: { backgroundColor: '#F59E0B', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: '#F59E0B', shadowOpacity: 0.4, shadowRadius: 10, elevation: 5 },
-  buyBtnTxt: { fontSize: 16, fontWeight: '900', color: '#0F172A' },
+  priceLabel: { fontSize: 15, fontFamily: 'Cairo_700Bold', color: '#F1F5F9' },
+  priceBadge: { backgroundColor: '#6366F1', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  priceAmt: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#07091C' },
+  buyBtn: { backgroundColor: '#6366F1', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: '#6366F1', shadowOpacity: 0.4, shadowRadius: 10, elevation: 5 },
+  buyBtnTxt: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#07091C' },
   secureNote: { fontSize: 11, color: '#64748B', textAlign: 'center', marginTop: 12 },
 });
