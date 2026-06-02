@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { psSummary, retInfo, penCalc, psAtDate, ageNow, ageAt, SYS_OPTS, mdfCal, fI } from '../utils/pension';
+import { psSummary, retInfo, penCalc, psAtDate, ageNow, ageAt, SYS_OPTS, mdfCal, fI, hijriStrToIso, isoToHijriStr } from '../utils/pension';
 
 const { width } = Dimensions.get('window');
 const STORAGE_KEY = '@eref_input_v1';
@@ -22,6 +22,21 @@ const STEPS = ['المعلومات الأساسية', 'مدد الخدمة', 'ا
 
 const isValidDate = v => /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(new Date(v).getTime());
 
+const isValidHijri = v => {
+  const n = (v || '').replace(/\//g, '-');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(n)) return false;
+  const [y, m, d] = n.split('-').map(Number);
+  return y >= 1300 && y <= 1500 && m >= 1 && m <= 12 && d >= 1 && d <= 30;
+};
+
+const toGreg = (raw, mode) => {
+  if (mode === 'h') {
+    if (!isValidHijri(raw)) return '';
+    return hijriStrToIso(raw.replace(/\//g, '-')) || '';
+  }
+  return raw;
+};
+
 export default function InputScreen({ navigation, route }) {
   const isDemo = route?.params?.demo;
   const [step, setStep] = useState(0);
@@ -33,20 +48,43 @@ export default function InputScreen({ navigation, route }) {
   ]);
   const [salary, setSalary] = useState('');
 
+  // أوضاع التقويم — هجري أو ميلادي لكل حقل
+  const [bdMode, setBdMode] = useState('g');
+  const [rdMode, setRdMode] = useState('g');
+  const [bdRaw, setBdRaw] = useState(''); // ما كتبه المستخدم (قد يكون هجري)
+  const [rdRaw, setRdRaw] = useState('');
+
   // تحميل البيانات المحفوظة
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then(json => {
       if (!json) return;
       try {
         const saved = JSON.parse(json);
-        if (saved.bd) setBd(saved.bd);
-        if (saved.rd) setRd(saved.rd);
+        if (saved.bd) { setBd(saved.bd); setBdRaw(saved.bd); }
+        if (saved.rd) { setRd(saved.rd); setRdRaw(saved.rd); }
         if (saved.deps != null) setDeps(saved.deps);
         if (saved.periods?.length) setPeriods(saved.periods);
         if (saved.salary) setSalary(saved.salary);
       } catch {}
     });
   }, []);
+
+  const handleDateChange = (raw, mode, setRaw, setGreg) => {
+    setRaw(raw);
+    const greg = toGreg(raw, mode);
+    setGreg(greg);
+  };
+
+  const handleModeChange = (newMode, currentGreg, setMode, setRaw) => {
+    setMode(newMode);
+    if (newMode === 'h' && isValidDate(currentGreg)) {
+      setRaw(isoToHijriStr(currentGreg));
+    } else if (newMode === 'g' && isValidDate(currentGreg)) {
+      setRaw(currentGreg);
+    } else {
+      setRaw('');
+    }
+  };
 
   // حفظ تلقائي
   useEffect(() => {
@@ -127,13 +165,19 @@ export default function InputScreen({ navigation, route }) {
           {/* ═══ الخطوة 1 ═══ */}
           {step === 0 && (
             <View>
-              <Field label="📅 تاريخ الميلاد" hint="مثال: 1980-06-15">
-                <TextInput style={[s.input, bd && !isValidDate(bd) && s.inputErr]} value={bd} onChangeText={setBd} placeholder="YYYY-MM-DD" placeholderTextColor="#475569" keyboardType="numbers-and-punctuation" />
-              </Field>
+              <DateField
+                label="📅 تاريخ الميلاد"
+                raw={bdRaw} greg={bd} mode={bdMode}
+                onChangeRaw={v => handleDateChange(v, bdMode, setBdRaw, setBd)}
+                onModeChange={m => handleModeChange(m, bd, setBdMode, setBdRaw)}
+              />
 
-              <Field label="🗓️ تاريخ التقاعد المستهدف" hint="متى تخطط للتقاعد؟">
-                <TextInput style={[s.input, rd && !isValidDate(rd) && s.inputErr]} value={rd} onChangeText={setRd} placeholder="YYYY-MM-DD" placeholderTextColor="#475569" keyboardType="numbers-and-punctuation" />
-              </Field>
+              <DateField
+                label="🗓️ تاريخ التقاعد المستهدف"
+                raw={rdRaw} greg={rd} mode={rdMode}
+                onChangeRaw={v => handleDateChange(v, rdMode, setRdRaw, setRd)}
+                onModeChange={m => handleModeChange(m, rd, setRdMode, setRdRaw)}
+              />
 
               {bd && rd && isValidDate(bd) && isValidDate(rd) && (
                 <View style={s.infoCard}>
@@ -185,9 +229,22 @@ export default function InputScreen({ navigation, route }) {
                     </View>
                   </ScrollView>
 
-                  <Field label="تاريخ البداية" hint="YYYY-MM-DD">
-                    <TextInput style={[s.input, p.sd && !isValidDate(p.sd) && s.inputErr]} value={p.sd} onChangeText={v => updatePeriod(p.id, 'sd', v)} placeholder="YYYY-MM-DD" placeholderTextColor="#475569" keyboardType="numbers-and-punctuation" />
-                  </Field>
+                  <PeriodDateField
+                    label="تاريخ البداية"
+                    value={p.sd} mode={p.pdm || 'g'}
+                    onChangeText={v => {
+                      const greg = toGreg(v, p.pdm || 'g');
+                      updatePeriod(p.id, 'sd', greg || v);
+                      updatePeriod(p.id, 'sdRaw', v);
+                    }}
+                    onModeChange={m => {
+                      const newRaw = m === 'h' && isValidDate(p.sd) ? isoToHijriStr(p.sd) : p.sd;
+                      updatePeriod(p.id, 'pdm', m);
+                      updatePeriod(p.id, 'sdRaw', newRaw);
+                    }}
+                    rawVal={p.sdRaw || p.sd}
+                    greg={p.sd}
+                  />
 
                   <View style={s.activeRow}>
                     <Text style={s.fieldLabel}>لا تزال سارية</Text>
@@ -195,9 +252,22 @@ export default function InputScreen({ navigation, route }) {
                   </View>
 
                   {!p.ac && (
-                    <Field label="تاريخ النهاية" hint="YYYY-MM-DD">
-                      <TextInput style={[s.input, p.ed && !isValidDate(p.ed) && s.inputErr]} value={p.ed} onChangeText={v => updatePeriod(p.id, 'ed', v)} placeholder="YYYY-MM-DD" placeholderTextColor="#475569" keyboardType="numbers-and-punctuation" />
-                    </Field>
+                    <PeriodDateField
+                      label="تاريخ النهاية"
+                      value={p.ed} mode={p.pdm || 'g'}
+                      onChangeText={v => {
+                        const greg = toGreg(v, p.pdm || 'g');
+                        updatePeriod(p.id, 'ed', greg || v);
+                        updatePeriod(p.id, 'edRaw', v);
+                      }}
+                      onModeChange={m => {
+                        const newRaw = m === 'h' && isValidDate(p.ed) ? isoToHijriStr(p.ed) : p.ed;
+                        updatePeriod(p.id, 'pdm', m);
+                        updatePeriod(p.id, 'edRaw', newRaw);
+                      }}
+                      rawVal={p.edRaw || p.ed}
+                      greg={p.ed}
+                    />
                   )}
 
                   <Field label="الراتب الأساسي (ر.س)">
@@ -289,6 +359,78 @@ const Field = ({ label, hint, children }) => (
   </View>
 );
 
+// حقل تاريخ مع toggle هجري/ميلادي (الخطوة 1)
+const DateField = ({ label, raw, greg, mode, onChangeRaw, onModeChange }) => {
+  const isH = mode === 'h';
+  const valid = isH ? isValidHijri(raw) : isValidDate(raw);
+  const invalid = raw && raw.length > 4 && !valid;
+  const hint = isH && isValidHijri(raw)
+    ? `ميلادي: ${hijriStrToIso(raw.replace(/\//g, '-')) || '—'}`
+    : !isH && isValidDate(greg)
+    ? `هجري: ${isoToHijriStr(greg)}`
+    : isH ? 'مثال: 1395-06-15' : 'مثال: 1975-06-15';
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <View style={s.dualLabelRow}>
+        <Text style={s.fieldLabel}>{label}</Text>
+        <View style={s.calToggle}>
+          <TouchableOpacity style={[s.calBtn, mode === 'g' && s.calBtnActive]} onPress={() => onModeChange('g')}>
+            <Text style={[s.calBtnTxt, mode === 'g' && s.calBtnTxtActive]}>م</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.calBtn, mode === 'h' && s.calBtnActive]} onPress={() => onModeChange('h')}>
+            <Text style={[s.calBtnTxt, mode === 'h' && s.calBtnTxtActive]}>هـ</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <TextInput
+        style={[s.input, invalid && s.inputErr]}
+        value={raw}
+        onChangeText={onChangeRaw}
+        placeholder={isH ? 'YYYY-MM-DD (هجري)' : 'YYYY-MM-DD (ميلادي)'}
+        placeholderTextColor="#475569"
+        keyboardType="numbers-and-punctuation"
+      />
+      <Text style={[s.calHint, { color: invalid ? '#EF4444' : '#10B981' }]}>{hint}</Text>
+    </View>
+  );
+};
+
+// حقل تاريخ مدة (الخطوة 2) — أبسط
+const PeriodDateField = ({ label, rawVal, greg, mode, onChangeText, onModeChange }) => {
+  const isH = mode === 'h';
+  const valid = isH ? isValidHijri(rawVal) : isValidDate(rawVal);
+  const invalid = rawVal && rawVal.length > 4 && !valid;
+  const hint = isH && isValidHijri(rawVal)
+    ? `م: ${hijriStrToIso(rawVal.replace(/\//g, '-')) || '—'}`
+    : !isH && isValidDate(greg)
+    ? `هـ: ${isoToHijriStr(greg)}`
+    : '';
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <View style={s.dualLabelRow}>
+        <Text style={s.fieldLabel}>{label}</Text>
+        <View style={s.calToggle}>
+          <TouchableOpacity style={[s.calBtn, mode === 'g' && s.calBtnActive]} onPress={() => onModeChange('g')}>
+            <Text style={[s.calBtnTxt, mode === 'g' && s.calBtnTxtActive]}>م</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.calBtn, mode === 'h' && s.calBtnActive]} onPress={() => onModeChange('h')}>
+            <Text style={[s.calBtnTxt, mode === 'h' && s.calBtnTxtActive]}>هـ</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <TextInput
+        style={[s.input, invalid && s.inputErr]}
+        value={rawVal}
+        onChangeText={onChangeText}
+        placeholder={isH ? 'YYYY-MM-DD (هجري)' : 'YYYY-MM-DD'}
+        placeholderTextColor="#475569"
+        keyboardType="numbers-and-punctuation"
+      />
+      {hint ? <Text style={s.calHint}>{hint}</Text> : null}
+    </View>
+  );
+};
+
 const InfoRow = ({ icon, label, value }) => (
   <View style={s.infoRow}>
     <Text style={s.infoIcon}>{icon}</Text>
@@ -309,7 +451,14 @@ const s = StyleSheet.create({
   stepHint: { fontSize: 11, color: '#475569', textAlign: 'center', marginTop: 6, marginBottom: 2 },
   scroll: { padding: 20, paddingBottom: 50 },
 
-  fieldLabel: { fontSize: 13, fontWeight: '700', color: '#94A3B8', marginBottom: 6 },
+  dualLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  calToggle: { flexDirection: 'row', borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#334155' },
+  calBtn: { paddingHorizontal: 10, paddingVertical: 5, backgroundColor: '#1E293B' },
+  calBtnActive: { backgroundColor: '#F59E0B' },
+  calBtnTxt: { fontSize: 12, color: '#64748B', fontWeight: '700' },
+  calBtnTxtActive: { color: '#0F172A' },
+  calHint: { fontSize: 10, color: '#10B981', marginTop: 4, textAlign: 'right' },
+  fieldLabel: { fontSize: 13, fontWeight: '700', color: '#94A3B8', marginBottom: 0 },
   fieldHint: { fontSize: 10, color: '#475569', marginBottom: 5 },
   input: { backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, color: '#F1F5F9', fontSize: 15, borderWidth: 1, borderColor: '#334155', textAlign: 'right' },
   inputErr: { borderColor: '#EF4444' },
