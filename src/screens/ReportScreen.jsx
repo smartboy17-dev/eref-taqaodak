@@ -174,6 +174,7 @@ export default function ReportScreen({ navigation, route }) {
                 width={Math.max(300, width - 44)}
                 height={170}
                 color={gold}
+                target={Math.round(salary * 0.7)}
               />
             </ScrollView>
             <View style={s.timelineLegend}>
@@ -188,6 +189,62 @@ export default function ReportScreen({ navigation, route }) {
             </View>
           </Section>
         )}
+
+        {/* ─── توصية ذكية ─── */}
+        {(() => {
+          const target70 = salary * 0.7;
+          const allMs = scenarios.filter(sc => sc.type === 'months');
+          const hit = allMs.find(sc => sc.newPension >= target70);
+          const best = hit || allMs[allMs.length - 1];
+          if (!best) return null;
+          const hitsPct = Math.round((best.newPension / salary) * 100);
+          return (
+            <View style={s.recCard}>
+              <Text style={s.recIcon}>💡</Text>
+              <View style={s.recBody}>
+                <Text style={s.recTitle}>
+                  {hit ? `أضف ${best.addM >= 12 ? best.addY + ' سنة' : best.addM + ' شهر'} لتحقيق هدفك` : `أفضل تحسين متاح: +${best.addM >= 12 ? best.addY + ' سنة' : best.addM + ' شهر'}`}
+                </Text>
+                <Text style={s.recSub}>
+                  معاشك: {fI(best.newPension)} ر.س ({hitsPct}% من راتبك)
+                  {best.breakEvenMonths ? `  •  نقطة التعادل: ${best.breakEvenMonths} شهر` : ''}
+                </Text>
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* ─── تحليل فجوة المعاش ─── */}
+        <Section icon="🎯" title="تحليل فجوة المعاش">
+          <Text style={s.scenarioNote}>مقارنة معاشك بهدف استبدال 70% من راتبك الحالي ({fI(Math.round(salary * 0.7))} ر.س):</Text>
+          {(() => {
+            const maxVal = Math.max(salary, pen.f, ...monthScenarios.slice(0, 3).map(s => s.newPension));
+            const items = [
+              { label: 'راتبك الحالي', value: salary, color: '#475569', note: '100%' },
+              { label: 'هدف 70%', value: Math.round(salary * 0.7), color: grn, note: '70%' },
+              { label: 'معاشك الآن', value: Math.round(pen.f), color: benchmarkColor, note: `${benchmarkPct}%` },
+              ...monthScenarios.slice(0, 3).map(sc => ({
+                label: `+${sc.addM >= 12 ? sc.addY + 'س' : sc.addM + 'ش'}`,
+                value: sc.newPension,
+                color: blu,
+                note: `${Math.round((sc.newPension / salary) * 100)}%`,
+              })),
+            ];
+            const target70pct = Math.round((salary * 0.7 / maxVal) * 100);
+            return items.map((item, i) => (
+              <View key={i} style={s.gapRow}>
+                <Text style={s.gapLabel}>{item.label}</Text>
+                <View style={s.gapTrack}>
+                  <View style={[s.gapFill, { width: `${Math.min(100, Math.round((item.value / maxVal) * 100))}%`, backgroundColor: item.color }]} />
+                  <View style={[s.gapMark, { left: `${target70pct}%` }]} />
+                </View>
+                <Text style={[s.gapVal, { color: item.color }]}>{fI(item.value)}</Text>
+                <Text style={[s.gapPct, { color: item.color }]}>{item.note}</Text>
+              </View>
+            ));
+          })()}
+          <Text style={s.gapNote}>الخط العمودي = هدف 70% من الراتب</Text>
+        </Section>
 
         {/* ─── رسم توزيع المدد ─── */}
         {donutSegments.length > 1 && (
@@ -381,6 +438,21 @@ const s = StyleSheet.create({
   scenarioDelta: { fontSize: 15, fontWeight: '900', color: '#10B981', marginBottom: 2 },
   scenarioNew: { fontSize: 10, color: '#64748B' },
   scenarioBreak: { fontSize: 9, color: '#8B5CF6', marginTop: 2 },
+
+  recCard: { backgroundColor: '#10B98112', borderRadius: 16, padding: 14, marginBottom: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderWidth: 1, borderColor: '#10B98130', borderRightWidth: 3, borderRightColor: '#10B981' },
+  recIcon: { fontSize: 22, marginTop: 1 },
+  recBody: { flex: 1 },
+  recTitle: { fontSize: 13, fontWeight: '800', color: '#10B981', marginBottom: 4 },
+  recSub: { fontSize: 11, color: '#6EE7B7', lineHeight: 18 },
+
+  gapRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 9, gap: 6 },
+  gapLabel: { fontSize: 9, color: '#94A3B8', width: 56, textAlign: 'right' },
+  gapTrack: { flex: 1, height: 18, backgroundColor: '#0F172A', borderRadius: 4, overflow: 'hidden', position: 'relative' },
+  gapFill: { height: '100%', borderRadius: 4, opacity: 0.8 },
+  gapMark: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: '#10B981' },
+  gapVal: { fontSize: 11, fontWeight: '800', width: 46, textAlign: 'right' },
+  gapPct: { fontSize: 9, fontWeight: '700', width: 28, textAlign: 'right' },
+  gapNote: { fontSize: 9, color: '#475569', textAlign: 'center', marginTop: 6 },
 
   disclaimer: { backgroundColor: '#1E293B', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155', borderRightWidth: 3, borderRightColor: '#F59E0B' },
   disclaimerTxt: { fontSize: 11, color: '#64748B', lineHeight: 19 },

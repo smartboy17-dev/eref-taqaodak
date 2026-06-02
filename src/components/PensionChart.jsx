@@ -138,14 +138,14 @@ export function GaugeMeter({ pct, size = 180, currentM = 0, targetM = 0 }) {
 // ── مخطط المسار الزمني (area) ──────────────────────────────────────
 const fK = n => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(Math.round(n));
 
-export function AreaChart({ points, width = 320, height = 160, color = gold }) {
+export function AreaChart({ points, width = 320, height = 160, color = gold, target = 0 }) {
   if (!points || points.length < 2) return null;
-  const PL = 44, PT = 14, PB = 26, PR = 14;
+  const PL = 44, PT = 14, PB = 26, PR = 22;
   const cW = width - PL - PR;
   const cH = height - PT - PB;
   const pensions = points.map(p => p.pension);
   const minV = Math.min(...pensions);
-  const maxV = Math.max(...pensions);
+  const maxV = Math.max(...pensions, target ? target * 1.08 : 0);
   const rng = maxV - minV || 1;
   const px = i => PL + (i / (points.length - 1)) * cW;
   const py = v => PT + cH - ((v - minV) / rng) * cH;
@@ -181,6 +181,12 @@ export function AreaChart({ points, width = 320, height = 160, color = gold }) {
           {i === 0 ? 'الآن' : i === points.length - 1 ? 'التقاعد' : `+${points[i].year}س`}
         </SvgText>
       ))}
+      {target > 0 && target >= minV && target <= maxV && (
+        <>
+          <Line x1={PL} y1={py(target)} x2={width - PR} y2={py(target)} stroke="#10B98170" strokeWidth="1.5" strokeDasharray="5,3" />
+          <SvgText x={width - PR + 2} y={py(target) + 4} fontSize="8" fill="#10B981" fontFamily="System">70%</SvgText>
+        </>
+      )}
       <Circle cx={px(0)} cy={py(points[0].pension)} r="4" fill="#475569" />
       <Circle cx={px(points.length - 1)} cy={py(points[points.length - 1].pension)} r="5" fill={color} />
       <SvgText x={px(points.length - 1) - 2} y={py(points[points.length - 1].pension) - 9} textAnchor="end" fontSize="9.5" fontWeight="700" fill={color} fontFamily="System">
