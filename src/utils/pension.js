@@ -174,6 +174,19 @@ export const calcScenarios = (ps, currentSalary, basePension, deps = 0) => {
   return scenarios;
 };
 
+// ── مسار نمو المعاش (للرسم البياني الزمني) ───────────────────────────
+export const calcTimeline = (ps, salary, deps = 0, yearsAhead = 10) => {
+  const yrs = Math.min(Math.max(Math.round(yearsAhead), 1), 35);
+  const pts = [];
+  for (let y = 0; y <= yrs; y++) {
+    const addM = y * 12;
+    const sim = { ...ps, nM: ps.nM + addM, tM: ps.tM + addM };
+    const p = penCalc(sim, salary, deps);
+    pts.push({ year: y, months: Math.round(ps.tM + addM), pension: Math.round(p.f) });
+  }
+  return pts;
+};
+
 // ── تنسيق الأرقام ──────────────────────────────────────────────────
 export const fmt = n => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n);
 export const fI = n => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);

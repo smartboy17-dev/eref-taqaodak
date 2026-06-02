@@ -95,6 +95,101 @@ export function ArcProgress({ pct, size = 140, color = gold, label = '', sublabe
   );
 }
 
+// ── مقياس الاستعداد التقاعدي (gauge) ─────────────────────────────
+export function GaugeMeter({ pct, size = 180, currentM = 0, targetM = 0 }) {
+  const cx = size / 2, cy = size / 2;
+  const r = (size / 2) - 16;
+  const strokeW = 13;
+  const maxAngle = 220;
+  const startAngle = -110;
+  const toRad = d => d * Math.PI / 180;
+  const arcPath = (sDeg, eDeg) => {
+    const sr = toRad(sDeg), er = toRad(eDeg);
+    const x1 = cx + r * Math.cos(sr), y1 = cy + r * Math.sin(sr);
+    const x2 = cx + r * Math.cos(er), y2 = cy + r * Math.sin(er);
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${(eDeg - sDeg) > 180 ? 1 : 0} 1 ${x2} ${y2}`;
+  };
+  const clamp = Math.min(Math.max(pct, 0), 1);
+  const progAngle = maxAngle * clamp;
+  const color = pct < 0.5 ? '#EF4444' : pct < 0.8 ? '#F59E0B' : '#10B981';
+  const pctNum = Math.round(Math.min(pct, 9.99) * 100);
+
+  return (
+    <Svg width={size} height={size}>
+      <Path d={arcPath(startAngle, startAngle + maxAngle)} stroke="#1E293B" strokeWidth={strokeW} fill="none" strokeLinecap="round" />
+      {progAngle > 1 && (
+        <Path d={arcPath(startAngle, startAngle + progAngle)} stroke={color} strokeWidth={strokeW} fill="none" strokeLinecap="round" />
+      )}
+      <SvgText x={cx} y={cy - 8} textAnchor="middle" fontSize={size * 0.17} fontWeight="900" fill={color} fontFamily="System">
+        {pctNum}%
+      </SvgText>
+      <SvgText x={cx} y={cy + 13} textAnchor="middle" fontSize={size * 0.072} fill={txt2} fontFamily="System">
+        استعداد تقاعدي
+      </SvgText>
+      {currentM > 0 && targetM > 0 && (
+        <SvgText x={cx} y={cy + 30} textAnchor="middle" fontSize={size * 0.063} fill="#475569" fontFamily="System">
+          {Math.round(currentM)} / {targetM} شهر
+        </SvgText>
+      )}
+    </Svg>
+  );
+}
+
+// ── مخطط المسار الزمني (area) ──────────────────────────────────────
+const fK = n => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(Math.round(n));
+
+export function AreaChart({ points, width = 320, height = 160, color = gold }) {
+  if (!points || points.length < 2) return null;
+  const PL = 44, PT = 14, PB = 26, PR = 14;
+  const cW = width - PL - PR;
+  const cH = height - PT - PB;
+  const pensions = points.map(p => p.pension);
+  const minV = Math.min(...pensions);
+  const maxV = Math.max(...pensions);
+  const rng = maxV - minV || 1;
+  const px = i => PL + (i / (points.length - 1)) * cW;
+  const py = v => PT + cH - ((v - minV) / rng) * cH;
+  const base = PT + cH;
+
+  const linePts = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${px(i).toFixed(1)},${py(p.pension).toFixed(1)}`).join(' ');
+  const areaPath = `${linePts} L${px(points.length - 1).toFixed(1)},${base} L${px(0).toFixed(1)},${base} Z`;
+
+  const step = Math.max(1, Math.ceil((points.length - 1) / 4));
+  const xIdxs = [...new Set([0, step, step * 2, step * 3, points.length - 1])].filter(i => i < points.length);
+  const yVals = [minV, Math.round((minV + maxV) / 2), maxV];
+
+  return (
+    <Svg width={width} height={height}>
+      <Defs>
+        <LinearGradient id="aG" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={color} stopOpacity="0.35" />
+          <Stop offset="1" stopColor={color} stopOpacity="0.02" />
+        </LinearGradient>
+      </Defs>
+      {[0.33, 0.67, 1].map((r, i) => (
+        <Line key={i} x1={PL} y1={PT + cH * (1 - r)} x2={width - PR} y2={PT + cH * (1 - r)} stroke="#1E293B" strokeWidth="0.6" strokeDasharray="4,3" />
+      ))}
+      <Path d={areaPath} fill="url(#aG)" />
+      <Path d={linePts} stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {yVals.map((v, i) => (
+        <SvgText key={i} x={PL - 4} y={py(v) + 4} textAnchor="end" fontSize="8" fill={txt2} fontFamily="System">
+          {fK(v)}
+        </SvgText>
+      ))}
+      {xIdxs.map(i => (
+        <SvgText key={i} x={px(i)} y={height - 5} textAnchor="middle" fontSize="8" fill={txt2} fontFamily="System">
+          {i === 0 ? 'الآن' : i === points.length - 1 ? 'التقاعد' : `+${points[i].year}س`}
+        </SvgText>
+      ))}
+      <Circle cx={px(0)} cy={py(points[0].pension)} r="4" fill="#475569" />
+      <Circle cx={px(points.length - 1)} cy={py(points[points.length - 1].pension)} r="5" fill={color} />
+      <SvgText x={px(points.length - 1) - 2} y={py(points[points.length - 1].pension) - 9} textAnchor="end" fontSize="9.5" fontWeight="700" fill={color} fontFamily="System">
+        {fK(points[points.length - 1].pension)}
+      </SvgText>
+    </Svg>
+  );
+}
+
 // ── مخطط التوزيع (donut) ─────────────────────────────────────────
 export function DonutChart({ segments, size = 160, label = '', sublabel = '' }) {
   const cx = size / 2, cy = size / 2;

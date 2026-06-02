@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Share, Dimensions
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { BarChart, DonutChart, ArcProgress } from '../components/PensionChart';
-import { calcScenarios, fI, fMD, fmt } from '../utils/pension';
+import { BarChart, DonutChart, GaugeMeter, AreaChart } from '../components/PensionChart';
+import { calcScenarios, calcTimeline, fI, fMD, fmt } from '../utils/pension';
 
 const { width } = Dimensions.get('window');
 const gold = '#F59E0B';
@@ -38,6 +38,11 @@ export default function ReportScreen({ navigation, route }) {
 
   const earlyNeed = Math.max(0, ri.eR - ps.tM);
   const earlyOk = earlyNeed === 0;
+  const readinessPct = ps.tM / ri.eR;
+  const benchmarkPct = Math.round((pen.f / salary) * 100);
+  const benchmarkColor = benchmarkPct >= 70 ? grn : benchmarkPct >= 50 ? gold : red;
+  const yearsToRetire = Math.max(2, Math.min(35, Math.round((ageG || 0) - (ageNowG || 0))));
+  const timelinePoints = calcTimeline(ps, salary, deps, yearsToRetire);
   const scenarios = calcScenarios(ps, salary, pen.f, deps);
   const monthScenarios = scenarios.filter(sc => sc.type === 'months').slice(0, 6);
   const salScenarios = scenarios.filter(sc => sc.type === 'salary').slice(0, 4);
@@ -83,16 +88,58 @@ export default function ReportScreen({ navigation, route }) {
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* بطاقة المعاش الرئيسية */}
+        {/* لوحة الاستعداد التقاعدي */}
         <View style={s.heroCard}>
-          <Text style={s.heroSubtitle}>المعاش التقاعدي المتوقع</Text>
-          <Text style={s.heroAmount}>{fI(pen.f)}</Text>
-          <Text style={s.heroCur}>ريال سعودي / شهر</Text>
-          <Text style={s.heroYearly}>{fI(pen.f * 12)} ر.س سنوياً</Text>
+          <Text style={s.heroSubtitle}>مؤشر الاستعداد التقاعدي</Text>
+          <GaugeMeter pct={readinessPct} size={190} currentM={Math.round(ps.tM)} targetM={ri.eR} />
+          <View style={s.heroPills}>
+            <View style={s.heroPill}>
+              <Text style={s.heroPillNum}>{fI(pen.f)}</Text>
+              <Text style={s.heroPillLbl}>ر.س / شهر</Text>
+            </View>
+            <View style={s.heroPillSep} />
+            <View style={s.heroPill}>
+              <Text style={[s.heroPillNum, { color: benchmarkColor }]}>{benchmarkPct}%</Text>
+              <Text style={s.heroPillLbl}>من راتبك الحالي</Text>
+            </View>
+            <View style={s.heroPillSep} />
+            <View style={s.heroPill}>
+              <Text style={s.heroPillNum}>{fI(pen.f * 12)}</Text>
+              <Text style={s.heroPillLbl}>ر.س / سنة</Text>
+            </View>
+          </View>
           <View style={[s.statusBadge, { backgroundColor: earlyOk ? '#10B98120' : '#F59E0B20' }]}>
             <Text style={[s.statusTxt, { color: earlyOk ? grn : gold }]}>
               {earlyOk ? '✅ مؤهل للتقاعد المبكر' : `⏳ متبقي ${fI(earlyNeed)} شهر للتقاعد المبكر`}
             </Text>
+          </View>
+        </View>
+
+        {/* نسبة الاستبدال */}
+        <View style={[s.section, { flexDirection: 'row', gap: 10 }]}>
+          <View style={[s.benchKpi, { borderColor: benchmarkColor + '40' }]}>
+            <Text style={s.benchKpiIcon}>💼</Text>
+            <Text style={[s.benchKpiVal, { color: benchmarkColor }]}>{benchmarkPct}%</Text>
+            <Text style={s.benchKpiLbl}>نسبة الاستبدال</Text>
+            <Text style={[s.benchKpiNote, { color: benchmarkColor }]}>
+              {benchmarkPct >= 70 ? 'ممتاز ✅' : benchmarkPct >= 50 ? 'مقبول ⚠️' : 'منخفض ❌'}
+            </Text>
+          </View>
+          <View style={[s.benchKpi, { borderColor: (readinessPct >= 1 ? grn : readinessPct >= 0.7 ? gold : red) + '40' }]}>
+            <Text style={s.benchKpiIcon}>🎯</Text>
+            <Text style={[s.benchKpiVal, { color: readinessPct >= 1 ? grn : readinessPct >= 0.7 ? gold : red }]}>
+              {Math.round(Math.min(readinessPct, 1) * 100)}%
+            </Text>
+            <Text style={s.benchKpiLbl}>مدة التقاعد المبكر</Text>
+            <Text style={[s.benchKpiNote, { color: readinessPct >= 1 ? grn : gold }]}>
+              {readinessPct >= 1 ? 'اكتملت ✅' : `${fI(earlyNeed)} شهر متبقي`}
+            </Text>
+          </View>
+          <View style={[s.benchKpi, { borderColor: '#3B82F640' }]}>
+            <Text style={s.benchKpiIcon}>📅</Text>
+            <Text style={[s.benchKpiVal, { color: blu }]}>{yearsToRetire}</Text>
+            <Text style={s.benchKpiLbl}>سنة للتقاعد</Text>
+            <Text style={[s.benchKpiNote, { color: blu }]}>{ri.rY} سنة هجرية</Text>
           </View>
         </View>
 
@@ -116,6 +163,31 @@ export default function ReportScreen({ navigation, route }) {
           <Row label="مدتك الحالية" value={`${fI(Math.round(ps.tM))} شهر`} color={earlyOk ? grn : gold} />
           {!earlyOk && <Row label="المتبقي للمبكر" value={`${fI(earlyNeed)} شهر`} color={red} />}
         </Section>
+
+        {/* ─── مسار نمو المعاش ─── */}
+        {timelinePoints.length >= 3 && (
+          <Section icon="📈" title="مسار نمو معاشك حتى التقاعد">
+            <Text style={s.scenarioNote}>المعاش المتوقع لو تقاعدت في كل سنة من الآن:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <AreaChart
+                points={timelinePoints}
+                width={Math.max(300, width - 44)}
+                height={170}
+                color={gold}
+              />
+            </ScrollView>
+            <View style={s.timelineLegend}>
+              <View style={s.legendRow}>
+                <View style={[s.legendDot, { backgroundColor: '#475569' }]} />
+                <Text style={s.legendTxt}>الآن: {fI(timelinePoints[0].pension)} ر.س/شهر ({fI(Math.round(ps.tM))} شهر)</Text>
+              </View>
+              <View style={s.legendRow}>
+                <View style={[s.legendDot, { backgroundColor: gold }]} />
+                <Text style={s.legendTxt}>عند التقاعد: {fI(timelinePoints[timelinePoints.length - 1].pension)} ر.س/شهر (+{fI(timelinePoints[timelinePoints.length - 1].pension - timelinePoints[0].pension)} ر.س)</Text>
+              </View>
+            </View>
+          </Section>
+        )}
 
         {/* ─── رسم توزيع المدد ─── */}
         {donutSegments.length > 1 && (
@@ -267,13 +339,21 @@ const s = StyleSheet.create({
   exportTxt: { fontSize: 12, color: '#F59E0B', fontWeight: '700' },
   scroll: { padding: 20, paddingBottom: 50 },
 
-  heroCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 28, alignItems: 'center', marginBottom: 16, borderWidth: 1.5, borderColor: '#F59E0B30', shadowColor: '#F59E0B', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
-  heroSubtitle: { fontSize: 12, color: '#94A3B8', letterSpacing: 1.5, marginBottom: 10 },
-  heroAmount: { fontSize: 54, fontWeight: '900', color: '#F59E0B', lineHeight: 60 },
-  heroCur: { fontSize: 14, color: '#D97706', fontWeight: '600', marginBottom: 4 },
-  heroYearly: { fontSize: 12, color: '#64748B', marginBottom: 16 },
+  heroCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 20, alignItems: 'center', marginBottom: 14, borderWidth: 1.5, borderColor: '#F59E0B30', shadowColor: '#F59E0B', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+  heroSubtitle: { fontSize: 11, color: '#94A3B8', letterSpacing: 1.5, marginBottom: 4 },
+  heroPills: { flexDirection: 'row', alignItems: 'center', width: '100%', backgroundColor: '#0F172A', borderRadius: 14, paddingVertical: 14, marginVertical: 10, borderWidth: 1, borderColor: '#334155' },
+  heroPill: { flex: 1, alignItems: 'center' },
+  heroPillNum: { fontSize: 18, fontWeight: '900', color: '#F59E0B', marginBottom: 2 },
+  heroPillLbl: { fontSize: 9, color: '#64748B', textAlign: 'center' },
+  heroPillSep: { width: 1, height: 34, backgroundColor: '#334155' },
   statusBadge: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
   statusTxt: { fontSize: 12, fontWeight: '700' },
+  benchKpi: { flex: 1, backgroundColor: '#0F172A', borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1 },
+  benchKpiIcon: { fontSize: 18, marginBottom: 4 },
+  benchKpiVal: { fontSize: 22, fontWeight: '900', marginBottom: 2 },
+  benchKpiLbl: { fontSize: 9, color: '#64748B', textAlign: 'center', marginBottom: 4 },
+  benchKpiNote: { fontSize: 9, fontWeight: '700', textAlign: 'center' },
+  timelineLegend: { marginTop: 10, gap: 6 },
 
   section: { backgroundColor: '#1E293B', borderRadius: 18, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: '#334155' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },

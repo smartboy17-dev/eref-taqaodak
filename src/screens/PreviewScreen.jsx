@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Animated, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArcProgress, BarChart } from '../components/PensionChart';
+import { ArcProgress, GaugeMeter } from '../components/PensionChart';
 import { fI, fMD } from '../utils/pension';
 
 const { width } = Dimensions.get('window');
@@ -18,6 +18,9 @@ export default function PreviewScreen({ navigation, route }) {
   const earlyNeed = Math.max(0, ri.eR - ps.tM);
   const earlyOk = earlyNeed === 0;
   const totalMonths = Math.round(ps.tM);
+  const readinessPct = Math.min(ps.tM / ri.eR, 1);
+  const benchmarkPct = Math.round((pen.f / salary) * 100);
+  const benchmarkColor = benchmarkPct >= 70 ? '#10B981' : benchmarkPct >= 50 ? '#F59E0B' : '#EF4444';
 
   const handleBuy = () => {
     if (isDemo) {
@@ -55,27 +58,24 @@ export default function PreviewScreen({ navigation, route }) {
             </View>
           </View>
 
-          {/* Arc Progress */}
-          <View style={s.arcRow}>
-            <View style={s.arcBox}>
-              <ArcProgress
-                pct={totalMonths / ri.eR}
-                size={130}
-                color={earlyOk ? '#10B981' : '#F59E0B'}
-                label={fI(totalMonths)}
-                sublabel="شهر خدمة"
-              />
-              <Text style={s.arcLabel}>المدة المتراكمة</Text>
-            </View>
-            <View style={s.arcBox}>
-              <ArcProgress
-                pct={ageH / ri.rY}
-                size={130}
-                color="#3B82F6"
-                label={ageH.toFixed(1)}
-                sublabel="سنة هجرية"
-              />
-              <Text style={s.arcLabel}>عمرك عند التقاعد</Text>
+          {/* Readiness Gauge */}
+          <View style={s.gaugeSection}>
+            <GaugeMeter pct={readinessPct} size={180} currentM={totalMonths} targetM={ri.eR} />
+            <View style={s.gaugePills}>
+              <View style={s.gaugePill}>
+                <Text style={[s.gaugePillNum, { color: benchmarkColor }]}>{benchmarkPct}%</Text>
+                <Text style={s.gaugePillLbl}>من راتبك الحالي</Text>
+              </View>
+              <View style={s.gaugePillSep} />
+              <View style={s.gaugePill}>
+                <Text style={s.gaugePillNum}>{ri.rY}<Text style={{ fontSize: 11 }}>س</Text></Text>
+                <Text style={s.gaugePillLbl}>سن التقاعد</Text>
+              </View>
+              <View style={s.gaugePillSep} />
+              <View style={s.gaugePill}>
+                <Text style={s.gaugePillNum}>{fI(totalMonths)}</Text>
+                <Text style={s.gaugePillLbl}>شهر مكتسب</Text>
+              </View>
             </View>
           </View>
 
@@ -169,9 +169,12 @@ const s = StyleSheet.create({
   earlyBadge: { backgroundColor: '#0F172A', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
   earlyTxt: { fontSize: 12, fontWeight: '700' },
 
-  arcRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 },
-  arcBox: { alignItems: 'center' },
-  arcLabel: { fontSize: 11, color: '#64748B', marginTop: 6, textAlign: 'center' },
+  gaugeSection: { alignItems: 'center', marginBottom: 16 },
+  gaugePills: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0, backgroundColor: '#1E293B', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, marginTop: 4, borderWidth: 1, borderColor: '#334155', width: '100%' },
+  gaugePill: { flex: 1, alignItems: 'center' },
+  gaugePillNum: { fontSize: 20, fontWeight: '900', color: '#F59E0B', marginBottom: 2 },
+  gaugePillLbl: { fontSize: 9, color: '#64748B', textAlign: 'center' },
+  gaugePillSep: { width: 1, height: 36, backgroundColor: '#334155' },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   statCard: { width: (width - 50) / 2, backgroundColor: '#1E293B', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
