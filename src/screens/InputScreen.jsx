@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { psSummary, retInfo, penCalc, psAtDate, ageNow, ageAt, SYS_OPTS, mdfCal, fI, hijriStrToIso, isoToHijriStr } from '../utils/pension';
+import { psSummary, retInfo, penCalc, calcFullPension, psAtDate, ageNow, ageAt, SYS_OPTS, mdfCal, fI, hijriStrToIso, isoToHijriStr } from '../utils/pension';
 
 const { width } = Dimensions.get('window');
 const STORAGE_KEY = '@eref_input_v1';
@@ -56,17 +56,21 @@ export default function InputScreen({ navigation, route }) {
 
   // تحميل البيانات المحفوظة
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(json => {
-      if (!json) return;
-      try {
-        const saved = JSON.parse(json);
-        if (saved.bd) { setBd(saved.bd); setBdRaw(saved.bd); }
-        if (saved.rd) { setRd(saved.rd); setRdRaw(saved.rd); }
-        if (saved.deps != null) setDeps(saved.deps);
-        if (saved.periods?.length) setPeriods(saved.periods);
-        if (saved.salary) setSalary(saved.salary);
-      } catch {}
-    });
+    try {
+      AsyncStorage.getItem(STORAGE_KEY)
+        .then(json => {
+          if (!json) return;
+          try {
+            const saved = JSON.parse(json);
+            if (saved.bd) { setBd(saved.bd); setBdRaw(saved.bd); }
+            if (saved.rd) { setRd(saved.rd); setRdRaw(saved.rd); }
+            if (saved.deps != null) setDeps(saved.deps);
+            if (saved.periods?.length) setPeriods(saved.periods);
+            if (saved.salary) setSalary(saved.salary);
+          } catch {}
+        })
+        .catch(() => {});
+    } catch {}
   }, []);
 
   const handleDateChange = (raw, mode, setRaw, setGreg) => {
@@ -125,7 +129,29 @@ export default function InputScreen({ navigation, route }) {
     const psRF = psAtDate(periodsWithSt, '2024-07-03');
     const ri = retInfo(bd, psRF.tM);
     const sal = Math.min(+salary, 45000);
-    const pen = penCalc(ps, sal, deps);
+
+    // الاحتساب الكامل بالمنهجية الرسمية (شرائح + فروقات + قاعدة 150%)
+    const fullPen = calcFullPension(periodsWithSt, aEnd, deps);
+
+    // خريطة التوافق مع الشاشات الموجودة
+    let pen;
+    if (fullPen) {
+      const pO = fullPen.tiers.reduce((s, t) => s + t.pO, 0);
+      const pN = fullPen.tiers.reduce((s, t) => s + t.pN, 0);
+      pen = {
+        pO: +pO.toFixed(2),
+        pN: +pN.toFixed(2),
+        pV: 0,
+        dA: fullPen.depAllowance,
+        t: fullPen.total,
+        f: fullPen.final,
+        a: fullPen.approvedAvg,
+        fullPen,
+      };
+    } else {
+      pen = penCalc(ps, sal, deps);
+    }
+
     const ageG = ageAt(bd, rd).g;
     const ageH = ageAt(bd, rd).h;
     const ageNowG = ageNow(bd).g;

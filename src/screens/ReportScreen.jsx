@@ -146,15 +146,49 @@ export default function ReportScreen({ navigation, route }) {
 
         {/* ─── تفاصيل المعاش ─── */}
         <Section icon="📊" title="تفاصيل احتساب المعاش">
+          {pen.fullPen && (
+            <Row label="المتوسط المعتمد (قاعدة 150%)" value={`${fI(pen.fullPen.approvedAvg)} ر.س`} color="#94A3B8" />
+          )}
           {pen.pO > 0 && <Row label={`مدة قديمة (${fI(ps.oM)} شهر ÷ 600)`} value={`${fI(pen.pO)} ر.س`} color="#F97316" />}
           <Row label={`مدة جديدة (${fI(ps.nM)} شهر ÷ 480)`} value={`${fI(pen.pN)} ر.س`} color={blu} />
           {pen.pV > 0 && <Row label="اشتراك اختياري" value={`+ ${fI(pen.pV)} ر.س`} color={pur} />}
+          {pen.fullPen?.diffPension > 0 && (
+            <Row label={`فروقات رواتب (${pen.fullPen.diffDetails?.reduce((s, d) => s + d.count, 0)} شهر)`} value={`+ ${fI(pen.fullPen.diffPension)} ر.س`} color={pur} />
+          )}
           {pen.dA > 0 && <Row label={`بدل إعالة (${deps} معال)`} value={`+ ${fI(pen.dA)} ر.س`} color={grn} />}
           <View style={s.divider} />
           <Row label="الإجمالي" value={`${fI(pen.f)} ر.س`} color={gold} />
           <Row label="الأجر المعتمد" value={`${fI(salary)} ر.س`} color="#94A3B8" />
           <Row label="إجمالي المدة" value={fMD(ps.tM)} color="#94A3B8" />
         </Section>
+
+        {/* ─── تفاصيل الشرائح ─── */}
+        {pen.fullPen?.hasTwoTiers && (
+          <Section icon="🏗️" title="شريحتان مستقلتان (م/38)">
+            {pen.fullPen.tiers.map((t, i) => (
+              <View key={i}>
+                <Text style={s.tierLabel}>{t.label}</Text>
+                <Row label={`متوسط الشريحة`} value={`${fI(t.avg)} ر.س`} color="#94A3B8" />
+                {t.oM > 0 && <Row label={`مدة قديمة (${fI(t.oM)} شهر)`} value={`${fI(t.pO)} ر.س`} color="#F97316" />}
+                {t.nM > 0 && <Row label={`مدة جديدة (${fI(t.nM)} شهر)`} value={`${fI(t.pN)} ر.س`} color={blu} />}
+                <Row label="معاش الشريحة" value={`${fI(t.sub)} ر.س`} color={gold} />
+                {i < pen.fullPen.tiers.length - 1 && <View style={s.divider} />}
+              </View>
+            ))}
+          </Section>
+        )}
+
+        {/* ─── تفاصيل الفروقات ─── */}
+        {pen.fullPen?.hasDiffs && (
+          <Section icon="↕️" title="فروقات الرواتب">
+            {pen.fullPen.diffDetails.map((d, i) => (
+              <View key={i}>
+                <Row label={`أشهر الفروقات (${d.count} شهر)`} value={`متوسط: ${fI(d.diffAvg)} ر.س`} color="#94A3B8" />
+                <Row label={`معاش الفروقات — ${d.tierLabel}`} value={`${fI(d.dp)} ر.س`} color={pur} />
+              </View>
+            ))}
+          </Section>
+        )}
 
         {/* ─── الوضع التقاعدي ─── */}
         <Section icon="🏁" title="الوضع التقاعدي">
@@ -460,4 +494,5 @@ const s = StyleSheet.create({
 
   recalcBtn: { borderWidth: 1.5, borderColor: '#1C2848', borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
   recalcTxt: { fontSize: 14, fontFamily: 'Cairo_700Bold', color: '#94A3B8' },
+  tierLabel: { fontSize: 13, fontFamily: 'Cairo_700Bold', color: '#6366F1', marginBottom: 6, marginTop: 4 },
 });

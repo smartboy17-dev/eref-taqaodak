@@ -1,5 +1,5 @@
-// ── محرك حسابات التقاعد ─────────────────────────────────────────────
-// مُستخرج من مشروع حاسبة GOSI ومعدَّل للاستخدام في React Native
+// ── محرك حسابات التقاعد (GOSI) ────────────────────────────────────
+// يطبق المنهجية الرسمية الكاملة لإعداد التسويات
 
 // ── احتساب الأشهر (ميلادي) ──────────────────────────────────────────
 const GOSI_CUT = new Date('2022-02-01');
@@ -33,11 +33,11 @@ export const hijriGap = (dA, dB) => {
 export const ageAt = (bd, td) => { if (!bd || !td) return { g: 0, h: 0 }; const g = (new Date(td) - new Date(bd)) / (365.25 * 864e5); return { g: +(g).toFixed(1), h: +(g * 1.03069).toFixed(1) } };
 export const ageNow = (bd) => { if (!bd) return { g: 0, h: 0 }; const g = (Date.now() - new Date(bd)) / (365.25 * 864e5); return { g: +(g).toFixed(1), h: +(g * 1.03069).toFixed(1) } };
 
-// ── الجدول الاكتواري م/53 ─────────────────────────────────────────
+// ── الجدول الاكتواري رقم 5 (م/53) ────────────────────────────────────
 const AT = { 1: 1.04, 2: 1.0816, 3: 1.12486, 4: 1.16986, 5: 1.21665, 6: 1.26532, 7: 1.31593, 8: 1.36857, 9: 1.42331, 10: 1.48024, 11: 1.53945, 12: 1.60103, 13: 1.66507, 14: 1.73168, 15: 1.80094, 16: 1.87298, 17: 1.9479, 18: 2.02582, 19: 2.10685, 20: 2.19112, 21: 2.27877, 22: 2.30992, 23: 2.46472, 24: 2.5633, 25: 2.66584, 26: 2.77247, 27: 2.88337, 28: 2.9987, 29: 3.11865, 30: 3.2434, 31: 3.37313, 32: 3.50806, 33: 3.64838, 34: 3.79432, 35: 3.94609, 36: 4.10393, 37: 4.26809, 38: 4.43881, 39: 4.61637, 40: 4.80102 };
 export const actCalc = (y, m, d) => { if (y <= 0 && m <= 0) return { aM: 0, base: 1, next: 1, diff: 0, final: 1 }; const aM = d >= 15 ? m + 1 : m, cy = Math.min(Math.max(y, 1), 40); const base = AT[cy], next = y >= 40 ? AT[40] : AT[Math.min(cy + 1, 40)]; const diff = +(next - base).toFixed(5), final = +(base + (diff * aM / 12)).toFixed(5); return { aM, base, next, diff, final } };
 
-// ── جداول التعديلات 3/7/2024م ────────────────────────────────────
+// ── جداول سن التقاعد والاشتراط المبكر ────────────────────────────────
 const RA = [
   { mn: 48.5, rY: 58, rM: 0 }, { mn: 48, mx: 48.5, rY: 58, rM: 4 }, { mn: 47, mx: 48, rY: 58, rM: 8 },
   { mn: 46, mx: 47, rY: 59, rM: 0 }, { mn: 45, mx: 46, rY: 59, rM: 4 }, { mn: 44, mx: 45, rY: 59, rM: 8 },
@@ -95,10 +95,164 @@ export const psSummary = (periods, aEnd) => {
   return { oM, nM, vM, cM, wM, tM: oM + nM + vM + cM + wM, lS };
 };
 
-// ── احتساب المعاش ──────────────────────────────────────────────────
-// salary: الراتب المعتمد (بعد تطبيق قاعدة 150% إن وجدت)
-// ps: ملخص المدد { oM, nM, vM, tM }
-// deps: عدد المعالين
+// ── بناء تاريخ الرواتب الشهري ───────────────────────────────────────
+// من مدد الاشتراك → مصفوفة شهور مرتبة من الأقدم إلى الأحدث
+// { key, date, salary, isOld }
+export const buildSalaryTimeline = (periods, aEnd) => {
+  const OLD_CUT = new Date('2001-04-25');
+  const relevant = [...periods]
+    .filter(p => p.st !== 'مستبعد' && p.sl > 0 &&
+      p.sy !== 'تقاعد مدني' && p.sy !== 'تقاعد عسكري')
+    .sort((a, b) => new Date(a.sd) - new Date(b.sd));
+
+  const seen = new Set();
+  const timeline = [];
+
+  for (const p of relevant) {
+    const end = p.ac ? aEnd : p.ed;
+    if (!end) continue;
+    const sd = new Date(p.sd), ed = new Date(end);
+    if (isNaN(sd) || isNaN(ed) || ed < sd) continue;
+
+    let cur = new Date(sd.getFullYear(), sd.getMonth(), 1);
+    const endMo = new Date(ed.getFullYear(), ed.getMonth(), 1);
+
+    while (cur <= endMo) {
+      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        timeline.push({
+          key,
+          date: new Date(cur),
+          salary: Math.min(p.sl, 45000),
+          isOld: cur < OLD_CUT,
+        });
+      }
+      cur.setMonth(cur.getMonth() + 1);
+    }
+  }
+
+  return timeline.sort((a, b) => a.date - b.date);
+};
+
+// ── المتوسط المعتمد لمجموعة شهور (خطوات 1-3 من المنهجية الرسمية) ──────
+// خطوة 1: متوسط آخر 24 شهراً
+// خطوة 2: راتب الشهر رقم 60 من النهاية × 150%
+// خطوة 3: الأقل من الخطوتين = المتوسط المعتمد
+const calcTierAvg = (months) => {
+  if (!months.length) return 0;
+  const n = months.length;
+  const last24 = months.slice(Math.max(0, n - 24));
+  const avg24 = last24.reduce((s, m) => s + m.salary, 0) / last24.length;
+  const idx60 = n >= 60 ? n - 60 : 0;
+  const sal150 = months[idx60].salary * 1.5;
+  return Math.min(avg24, sal150);
+};
+
+// ── الاحتساب الكامل: شرائح + فروقات (المنهجية الرسمية GOSI م/33 المادة 38) ──
+// يُعيد: { approvedAvg, tiers[], hasTwoTiers, diffDetails[], diffPension, hasDiffs,
+//          depAllowance, total, final }
+export const calcFullPension = (periods, aEnd, deps = 0) => {
+  const tl = buildSalaryTimeline(periods, aEnd);
+  if (!tl.length) return null;
+  const n = tl.length;
+
+  // المتوسط المعتمد للكتلة الكاملة
+  const approvedAvg = calcTierAvg(tl);
+  const threshold = approvedAvg * 1.1;
+
+  // خطوة 5: البحث من الشهر 25 من النهاية نحو الأسفل
+  let splitIdx = -1;
+  for (let i = Math.max(0, n - 25); i >= 0; i--) {
+    if (tl[i].salary > threshold) {
+      splitIdx = i;
+      break;
+    }
+  }
+
+  let tiers = [];
+
+  // شروط الشريحتين: كل منهما ≥ 24 شهراً، والقديمة > الحديثة × 110%
+  if (splitIdx >= 23 && (n - splitIdx - 1) >= 24) {
+    const oldMonths = tl.slice(0, splitIdx + 1);
+    const newMonths = tl.slice(splitIdx + 1);
+    const oldAvg = calcTierAvg(oldMonths);
+    const newAvg = calcTierAvg(newMonths);
+
+    if (oldAvg > newAvg * 1.1) {
+      // قاعدة 2022: خذ الأفضل للمشترك بين شريحة واحدة وشريحتين
+      const singleTotal =
+        (tl.filter(m => m.isOld).length * approvedAvg) / 600 +
+        (tl.filter(m => !m.isOld).length * approvedAvg) / 480;
+      const twoTotal =
+        (oldMonths.filter(m => m.isOld).length * oldAvg) / 600 +
+        (oldMonths.filter(m => !m.isOld).length * oldAvg) / 480 +
+        (newMonths.filter(m => m.isOld).length * newAvg) / 600 +
+        (newMonths.filter(m => !m.isOld).length * newAvg) / 480;
+
+      if (twoTotal >= singleTotal) {
+        tiers = [
+          { months: newMonths, avg: newAvg, label: 'الشريحة الثانية' },
+          { months: oldMonths, avg: oldAvg, label: 'الشريحة الأولى' },
+        ];
+      }
+    }
+  }
+
+  if (!tiers.length) {
+    tiers = [{ months: tl, avg: approvedAvg, label: 'الشريحة الأساسية' }];
+  }
+
+  // احتساب معاش كل شريحة
+  const tierResults = tiers.map(t => {
+    const oM = t.months.filter(m => m.isOld).length;
+    const nM = t.months.filter(m => !m.isOld).length;
+    const pO = (oM * t.avg) / 600;
+    const pN = (nM * t.avg) / 480;
+    return { ...t, oM, nM, pO: +pO.toFixed(2), pN: +pN.toFixed(2), sub: +(pO + pN).toFixed(2) };
+  });
+
+  const mainTierPension = tierResults.reduce((s, t) => s + t.sub, 0);
+
+  // بدل معالين: على المكون القديم من الشريحة الأحدث فقط (م/38)
+  const dr = deps >= 3 ? 0.2 : deps === 2 ? 0.15 : deps === 1 ? 0.1 : 0;
+  const mainTier = tierResults[0];
+  const depAllowance = mainTier ? +((mainTier.oM * mainTier.avg / 600) * dr).toFixed(2) : 0;
+
+  // الفروقات: أشهر تجاوز راتبها 110% من متوسط شريحتها
+  let diffPension = 0;
+  const diffDetails = [];
+
+  tierResults.forEach(t => {
+    const tThresh = t.avg * 1.1;
+    const qualMonths = t.months.filter(m => m.salary > tThresh);
+    if (!qualMonths.length) return;
+    const diffAmounts = qualMonths.map(m => m.salary - t.avg);
+    const diffAvg = diffAmounts.reduce((s, v) => s + v, 0) / diffAmounts.length;
+    const dOldM = qualMonths.filter(m => m.isOld).length;
+    const dNewM = qualMonths.filter(m => !m.isOld).length;
+    const dp = (dOldM * diffAvg) / 600 + (dNewM * diffAvg) / 480;
+    diffPension += dp;
+    diffDetails.push({ tierLabel: t.label, count: qualMonths.length, diffAvg: +diffAvg.toFixed(2), dOldM, dNewM, dp: +dp.toFixed(2) });
+  });
+
+  const total = +(mainTierPension + depAllowance + diffPension).toFixed(2);
+  const final = total > 0 && total < 1983.75 ? 1983.75 : total;
+
+  return {
+    approvedAvg: +approvedAvg.toFixed(2),
+    tiers: tierResults,
+    hasTwoTiers: tierResults.length > 1,
+    diffDetails,
+    diffPension: +diffPension.toFixed(2),
+    hasDiffs: diffDetails.length > 0,
+    depAllowance,
+    total,
+    final,
+  };
+};
+
+// ── احتساب المعاش المبسط (للتوافق العكسي وسيناريوهات التحسين) ──────────
 export const penCalc = (ps, salary, deps = 0) => {
   const a = Math.min(salary, 45000);
   const pO = (ps.oM * a) / 600;
@@ -109,6 +263,53 @@ export const penCalc = (ps, salary, deps = 0) => {
   const t = pO + pN + pV + dA;
   const f = t > 0 && t < 1983.75 ? 1983.75 : +t.toFixed(2);
   return { pO: +pO.toFixed(2), pN: +pN.toFixed(2), pV: +pV.toFixed(2), dA: +dA.toFixed(2), t: +t.toFixed(2), f, a };
+};
+
+// ── عجز غير مهني (م/37): الأعلى من المعاش الطبيعي أو 50% من المتوسط ──
+export const calcNonOccDisability = (periods, aEnd, deps = 0) => {
+  const full = calcFullPension(periods, aEnd, deps);
+  if (!full) return null;
+  const halfAvg = full.approvedAvg * 0.5;
+  const nonOccPension = +Math.max(full.final, halfAvg, 1983.75).toFixed(2);
+  return { ...full, nonOccPension };
+};
+
+// ── عجز مهني (سعودي) ──────────────────────────────────────────────
+// average: متوسط آخر 3 أشهر قبل شهر الإصابة | pct: 1-100 | ageAtInjury: العمر
+export const calcOccDisabilitySaudi = (average, pct, ageAtInjury) => {
+  const avg = Math.min(average, 45000);
+  if (pct === 100) return { type: 'monthly', amount: +avg.toFixed(2) };
+  if (pct >= 50) return { type: 'monthly', amount: +(avg * pct / 100).toFixed(2) };
+  let mult = 60;
+  if (ageAtInjury > 40) mult = Math.max(36, 60 - (ageAtInjury - 40));
+  return { type: 'lumpSum', amount: +Math.min(avg * (pct / 100) * mult, 165000).toFixed(2) };
+};
+
+// ── عجز مهني (غير سعودي) ──────────────────────────────────────────
+export const calcOccDisabilityNonSaudi = (average, pct, ageAtInjury) => {
+  const avg = Math.min(average, 45000);
+  if (pct === 100) return { type: 'lumpSum', amount: +Math.min(avg * 84, 330000).toFixed(2) };
+  let mult = 60;
+  if (ageAtInjury > 40) mult = Math.max(36, 60 - (ageAtInjury - 40));
+  return { type: 'lumpSum', amount: +Math.min(avg * (pct / 100) * mult, 165000).toFixed(2) };
+};
+
+// ── المدة الاعتبارية ────────────────────────────────────────────────
+// المتوسط النهائي = معاش الشرائح + الفروقات / مجموع معاملات المدد
+// تكلفة الاشتراك = 18% × سنوات × المتوسط النهائي
+export const calcNotionalPeriod = (fullPensionResult, notionalYears) => {
+  if (!fullPensionResult || notionalYears <= 0) return null;
+  const { tiers, diffPension } = fullPensionResult;
+  let totalCoeff = 0;
+  tiers.forEach(t => { totalCoeff += t.oM / 600 + t.nM / 480; });
+  const pensionNoDep = tiers.reduce((s, t) => s + t.sub, 0) + diffPension;
+  const finalAvg = totalCoeff > 0 ? pensionNoDep / totalCoeff : fullPensionResult.approvedAvg;
+  return {
+    finalAvg: +finalAvg.toFixed(2),
+    notionalYears,
+    notionalCost: +(0.18 * notionalYears * finalAvg).toFixed(2),
+    notionalPension: +(finalAvg * notionalYears * 12 / 480).toFixed(2),
+  };
 };
 
 // ── احتساب المدة في تاريخ محدد ─────────────────────────────────────
@@ -127,54 +328,32 @@ export const psAtDate = (periods, targetDate) => {
 // ── سيناريوهات التحسين ─────────────────────────────────────────────
 export const calcScenarios = (ps, currentSalary, basePension, deps = 0) => {
   const scenarios = [];
-
-  // سيناريوهات إضافة أشهر (يستمر في العمل بنفس الراتب)
   [6, 12, 18, 24, 36, 48, 60, 84, 120].forEach(addM => {
     const newPs = { ...ps, nM: ps.nM + addM, tM: ps.tM + addM };
     const newPen = penCalc(newPs, currentSalary, deps);
     const delta = Math.round(newPen.f - basePension);
     if (delta > 0) {
-      // التكلفة: ما يدفعه الموظف (9% من راتبه)
       const monthlyCost = Math.round(currentSalary * 0.09);
-      // الفائدة السنوية = المعاش الإضافي × 12 شهراً
-      const annualGain = delta * 12;
-      // نقطة التعادل: بعد كم شهر تسترد ما دفعته
-      const breakEvenMonths = delta > 0 ? Math.ceil((monthlyCost * addM) / delta) : null;
       scenarios.push({
-        type: 'months',
-        addM,
-        addY: +(addM / 12).toFixed(1),
-        newPension: Math.round(newPen.f),
-        delta,
-        monthlyCost,
-        totalCost: monthlyCost * addM,
-        annualGain,
-        breakEvenMonths,
+        type: 'months', addM, addY: +(addM / 12).toFixed(1),
+        newPension: Math.round(newPen.f), delta,
+        monthlyCost, totalCost: monthlyCost * addM,
+        annualGain: delta * 12,
+        breakEvenMonths: Math.ceil((monthlyCost * addM) / delta),
       });
     }
   });
-
-  // سيناريوهات رفع الراتب
   [500, 1000, 2000, 3000, 5000].forEach(bump => {
     const newSalary = Math.min(currentSalary + bump, 45000);
     if (newSalary <= currentSalary) return;
     const newPen = penCalc(ps, newSalary, deps);
     const delta = Math.round(newPen.f - basePension);
-    if (delta > 0) {
-      scenarios.push({
-        type: 'salary',
-        salaryBump: bump,
-        newSalary,
-        newPension: Math.round(newPen.f),
-        delta,
-      });
-    }
+    if (delta > 0) scenarios.push({ type: 'salary', salaryBump: bump, newSalary, newPension: Math.round(newPen.f), delta });
   });
-
   return scenarios;
 };
 
-// ── مسار نمو المعاش (للرسم البياني الزمني) ───────────────────────────
+// ── مسار نمو المعاش (للرسم البياني) ──────────────────────────────────
 export const calcTimeline = (ps, salary, deps = 0, yearsAhead = 10) => {
   const yrs = Math.min(Math.max(Math.round(yearsAhead), 1), 35);
   const pts = [];

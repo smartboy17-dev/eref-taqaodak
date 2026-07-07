@@ -19,7 +19,11 @@ import PreviewScreen from './src/screens/PreviewScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
 import ReportScreen from './src/screens/ReportScreen';
 
-LogBox.ignoreLogs(['InteractionManager has been deprecated']);
+LogBox.ignoreLogs([
+  'InteractionManager has been deprecated',
+  'AsyncStorageError',
+  'Uncaught (in promise',
+]);
 
 SplashScreen.preventAutoHideAsync();
 const Stack = createStackNavigator();
