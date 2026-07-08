@@ -139,15 +139,18 @@ export const buildSalaryTimeline = (periods, aEnd) => {
 // خطوة 1: متوسط آخر 24 شهراً
 // خطوة 2: راتب الشهر رقم 60 من النهاية × 150%
 // خطوة 3: الأقل من الخطوتين = المتوسط المعتمد
-const calcTierAvg = (months) => {
-  if (!months.length) return 0;
+const calcTierAvgDetailed = (months) => {
+  if (!months.length) return { avg: 0, rawAvg24: 0, refSal: 0, capApplied: false, sal150: 0 };
   const n = months.length;
   const last24 = months.slice(Math.max(0, n - 24));
-  const avg24 = last24.reduce((s, m) => s + m.salary, 0) / last24.length;
+  const rawAvg24 = last24.reduce((s, m) => s + m.salary, 0) / last24.length;
   const idx60 = n >= 60 ? n - 60 : 0;
-  const sal150 = months[idx60].salary * 1.5;
-  return Math.min(avg24, sal150);
+  const refSal = months[idx60].salary;
+  const sal150 = refSal * 1.5;
+  const capApplied = rawAvg24 > sal150;
+  return { avg: +Math.min(rawAvg24, sal150).toFixed(2), rawAvg24: +rawAvg24.toFixed(2), refSal, sal150: +sal150.toFixed(2), capApplied };
 };
+const calcTierAvg = (months) => calcTierAvgDetailed(months).avg;
 
 // ── الاحتساب الكامل: شرائح + فروقات (المنهجية الرسمية GOSI م/33 المادة 38) ──
 // يُعيد: { approvedAvg, tiers[], hasTwoTiers, diffDetails[], diffPension, hasDiffs,
@@ -158,7 +161,8 @@ export const calcFullPension = (periods, aEnd, deps = 0) => {
   const n = tl.length;
 
   // المتوسط المعتمد للكتلة الكاملة
-  const approvedAvg = calcTierAvg(tl);
+  const capInfo = calcTierAvgDetailed(tl);
+  const approvedAvg = capInfo.avg;
   const threshold = approvedAvg * 1.1;
 
   // خطوة 5: البحث من الشهر 25 من النهاية نحو الأسفل
@@ -241,6 +245,11 @@ export const calcFullPension = (periods, aEnd, deps = 0) => {
 
   return {
     approvedAvg: +approvedAvg.toFixed(2),
+    rawAvg24: capInfo.rawAvg24,
+    refSal: capInfo.refSal,
+    sal150: capInfo.sal150,
+    capApplied: capInfo.capApplied,
+    capLoss: capInfo.capApplied ? +(capInfo.rawAvg24 - capInfo.sal150).toFixed(2) : 0,
     tiers: tierResults,
     hasTwoTiers: tierResults.length > 1,
     diffDetails,
@@ -328,6 +337,8 @@ export const psAtDate = (periods, targetDate) => {
 // ── سيناريوهات التحسين ─────────────────────────────────────────────
 export const calcScenarios = (ps, currentSalary, basePension, deps = 0) => {
   const scenarios = [];
+
+  // سيناريوهات إضافة أشهر خدمة (9% حصة الموظف)
   [6, 12, 18, 24, 36, 48, 60, 84, 120].forEach(addM => {
     const newPs = { ...ps, nM: ps.nM + addM, tM: ps.tM + addM };
     const newPen = penCalc(newPs, currentSalary, deps);
@@ -343,6 +354,25 @@ export const calcScenarios = (ps, currentSalary, basePension, deps = 0) => {
       });
     }
   });
+
+  // سيناريوهات الاشتراك الاختياري (18% كامل — حصة الموظف + المنشأة)
+  [6, 12, 24, 36, 60, 84, 120].forEach(addM => {
+    const newPs = { ...ps, vM: (ps.vM || 0) + addM, tM: ps.tM + addM };
+    const newPen = penCalc(newPs, currentSalary, deps);
+    const delta = Math.round(newPen.f - basePension);
+    if (delta > 0) {
+      const monthlyCost = Math.round(currentSalary * 0.18);
+      scenarios.push({
+        type: 'voluntary', addM, addY: +(addM / 12).toFixed(1),
+        newPension: Math.round(newPen.f), delta,
+        monthlyCost, totalCost: monthlyCost * addM,
+        annualGain: delta * 12,
+        breakEvenMonths: Math.ceil((monthlyCost * addM) / delta),
+      });
+    }
+  });
+
+  // سيناريوهات زيادة الراتب
   [500, 1000, 2000, 3000, 5000].forEach(bump => {
     const newSalary = Math.min(currentSalary + bump, 45000);
     if (newSalary <= currentSalary) return;
@@ -350,6 +380,7 @@ export const calcScenarios = (ps, currentSalary, basePension, deps = 0) => {
     const delta = Math.round(newPen.f - basePension);
     if (delta > 0) scenarios.push({ type: 'salary', salaryBump: bump, newSalary, newPension: Math.round(newPen.f), delta });
   });
+
   return scenarios;
 };
 
@@ -371,4 +402,4 @@ export const fmt = n => new Intl.NumberFormat('en-US', { maximumFractionDigits: 
 export const fI = n => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
 export const fMD = t => { const m = Math.floor(t); const d = Math.round((t - m) * 30); return d > 0 ? m + ' شهر و ' + d + ' يوم' : m + ' شهر' };
 
-export const SYS_OPTS = ['تأمينات - قطاع حكومي', 'تأمينات - قطاع خاص', 'تقاعد مدني', 'تقاعد عسكري', 'اشتراك اختياري'];
+export const SYS_OPTS = ['قطاع خاص | أنظمة العمل', 'قطاع عام | أنظمة التقاعد المدني', 'اشتراك اختياري'];

@@ -162,11 +162,11 @@ const s = StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 50 },
 
   pensionHero: { backgroundColor: '#111830', borderRadius: 24, padding: 24, marginBottom: 16, alignItems: 'center', borderWidth: 1.5, borderColor: '#6366F130', shadowColor: '#6366F1', shadowOpacity: 0.15, shadowRadius: 16, elevation: 6 },
-  heroLabel: { fontSize: 12, color: '#94A3B8', letterSpacing: 1.5, marginBottom: 8 },
+  heroLabel: { fontSize: 12, color: '#94A3B8', letterSpacing: 1.5, marginBottom: 8, fontFamily: 'Cairo_400Regular' },
   pensionRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 },
   pensionVal: { fontSize: 52, fontFamily: 'Cairo_900Black', color: '#F59E0B' },
   pensionCur: { fontSize: 15, color: '#D97706', fontFamily: 'Cairo_600SemiBold' },
-  pensionYearly: { fontSize: 12, color: '#64748B', marginBottom: 14 },
+  pensionYearly: { fontSize: 12, color: '#64748B', marginBottom: 14, fontFamily: 'Cairo_400Regular' },
   earlyBadge: { backgroundColor: '#07091C', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
   earlyTxt: { fontSize: 12, fontFamily: 'Cairo_700Bold' },
 
@@ -174,20 +174,20 @@ const s = StyleSheet.create({
   gaugePills: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0, backgroundColor: '#111830', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, marginTop: 4, borderWidth: 1, borderColor: '#1C2848', width: '100%' },
   gaugePill: { flex: 1, alignItems: 'center' },
   gaugePillNum: { fontSize: 20, fontFamily: 'Cairo_900Black', color: '#6366F1', marginBottom: 2 },
-  gaugePillLbl: { fontSize: 9, color: '#64748B', textAlign: 'center' },
+  gaugePillLbl: { fontSize: 9, color: '#64748B', textAlign: 'center', fontFamily: 'Cairo_400Regular' },
   gaugePillSep: { width: 1, height: 36, backgroundColor: '#1C2848' },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   statCard: { width: (width - 50) / 2, backgroundColor: '#111830', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1C2848', alignItems: 'center' },
   statIcon: { fontSize: 20, marginBottom: 6 },
   statVal: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#6366F1', marginBottom: 3 },
-  statLbl: { fontSize: 10, color: '#64748B', textAlign: 'center' },
+  statLbl: { fontSize: 10, color: '#64748B', textAlign: 'center', fontFamily: 'Cairo_400Regular' },
 
   lockCard: { backgroundColor: '#111830', borderRadius: 20, padding: 20, borderWidth: 1.5, borderColor: '#1C2848' },
   lockTitle: { fontSize: 15, fontFamily: 'Cairo_700Bold', color: '#F1F5F9', marginBottom: 14 },
   lockFeatures: { marginBottom: 18 },
   lockRow: { paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#07091C' },
-  lockFeatureTxt: { fontSize: 13, color: '#CBD5E1' },
+  lockFeatureTxt: { fontSize: 13, color: '#CBD5E1', fontFamily: 'Cairo_400Regular' },
 
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   priceLabel: { fontSize: 15, fontFamily: 'Cairo_700Bold', color: '#F1F5F9' },
@@ -195,5 +195,5 @@ const s = StyleSheet.create({
   priceAmt: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#07091C' },
   buyBtn: { backgroundColor: '#6366F1', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: '#6366F1', shadowOpacity: 0.4, shadowRadius: 10, elevation: 5 },
   buyBtnTxt: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#07091C' },
-  secureNote: { fontSize: 11, color: '#64748B', textAlign: 'center', marginTop: 12 },
+  secureNote: { fontSize: 11, color: '#64748B', textAlign: 'center', marginTop: 12, fontFamily: 'Cairo_400Regular' },
 });

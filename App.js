@@ -23,13 +23,14 @@ LogBox.ignoreLogs([
   'InteractionManager has been deprecated',
   'AsyncStorageError',
   'Uncaught (in promise',
+  'Non-serializable values were found in the navigation state',
 ]);
 
 SplashScreen.preventAutoHideAsync();
 const Stack = createStackNavigator();
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Cairo_400Regular,
     Cairo_600SemiBold,
     Cairo_700Bold,
@@ -41,10 +42,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

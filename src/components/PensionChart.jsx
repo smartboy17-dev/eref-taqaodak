@@ -24,36 +24,49 @@ export function BarChart({ bars, width = 320, height = 180 }) {
   const bx = i => PL + gap + i * (bW + gap);
 
   return (
-    <Svg width={width} height={height}>
-      <Defs>
-        {bars.map((b, i) => (
-          <LinearGradient key={i} id={`barGrad${i}`} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={b.clr} stopOpacity="1" />
-            <Stop offset="1" stopColor={b.clr} stopOpacity="0.5" />
-          </LinearGradient>
+    <View style={{ width, height }}>
+      <Svg width={width} height={height} style={{ position: 'absolute' }}>
+        <Defs>
+          {bars.map((b, i) => (
+            <LinearGradient key={i} id={`barGrad${i}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={b.clr} stopOpacity="1" />
+              <Stop offset="1" stopColor={b.clr} stopOpacity="0.5" />
+            </LinearGradient>
+          ))}
+        </Defs>
+        {[0.33, 0.67, 1].map((r, i) => (
+          <Line key={i} x1={PL} y1={PT + chartH - r * chartH} x2={width - PR} y2={PT + chartH - r * chartH} stroke={brd} strokeWidth="0.5" strokeDasharray="4,4" />
         ))}
-      </Defs>
-      {[0.33, 0.67, 1].map((r, i) => (
-        <Line key={i} x1={PL} y1={PT + chartH - r * chartH} x2={width - PR} y2={PT + chartH - r * chartH} stroke={brd} strokeWidth="0.5" strokeDasharray="4,4" />
+        {bars.map((b, i) => {
+          const x = bx(i), h = bh(b.val), y = by(b.val);
+          const fmtV = v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v);
+          return (
+            <G key={i}>
+              <Rect x={x + 2} y={y + 2} width={bW} height={h} rx={6} fill="rgba(0,0,0,0.2)" />
+              <Rect x={x} y={y} width={bW} height={h} rx={6} fill={`url(#barGrad${i})`} />
+              <SvgText x={x + bW / 2} y={y - 7} textAnchor="middle" fontSize="9" fontWeight="700" fill={b.clr} fontFamily="System">
+                {fmtV(b.val)}
+              </SvgText>
+            </G>
+          );
+        })}
+        <Line x1={PL} y1={PT + chartH} x2={width - PR} y2={PT + chartH} stroke={brd} strokeWidth="1" />
+      </Svg>
+      {bars.map((b, i) => (
+        <Text key={i} style={{
+          position: 'absolute',
+          left: bx(i),
+          top: height - PB + 4,
+          width: bW,
+          textAlign: 'center',
+          fontSize: 8,
+          color: txt2,
+          fontFamily: 'Cairo_400Regular',
+        }}>
+          {b.lb}
+        </Text>
       ))}
-      {bars.map((b, i) => {
-        const x = bx(i), h = bh(b.val), y = by(b.val);
-        const fmtV = v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v);
-        return (
-          <G key={i}>
-            <Rect x={x + 2} y={y + 2} width={bW} height={h} rx={6} fill="rgba(0,0,0,0.2)" />
-            <Rect x={x} y={y} width={bW} height={h} rx={6} fill={`url(#barGrad${i})`} />
-            <SvgText x={x + bW / 2} y={y - 7} textAnchor="middle" fontSize="9" fontWeight="700" fill={b.clr} fontFamily="System">
-              {fmtV(b.val)}
-            </SvgText>
-            <SvgText x={x + bW / 2} y={height - 12} textAnchor="middle" fontSize="8.5" fill={txt2} fontFamily="System">
-              {b.lb}
-            </SvgText>
-          </G>
-        );
-      })}
-      <Line x1={PL} y1={PT + chartH} x2={width - PR} y2={PT + chartH} stroke={brd} strokeWidth="1" />
-    </Svg>
+    </View>
   );
 }
 
@@ -86,10 +99,10 @@ export function ArcProgress({ pct, size = 140, color = gold, label = '', sublabe
       {fgPath && (
         <Path d={fgPath} stroke={color} strokeWidth={strokeW} fill="none" strokeLinecap="round" />
       )}
-      <SvgText x={cx} y={cy - 4} textAnchor="middle" fontSize="22" fontWeight="900" fill={color} fontFamily="System">
+      <SvgText x={cx} y={cy - 4} textAnchor="middle" fontSize="22" fontWeight="900" fill={color} fontFamily="Cairo_900Black">
         {label}
       </SvgText>
-      <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize="9" fill={txt2} fontFamily="System">
+      <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize="9" fill={txt2} fontFamily="Cairo_400Regular">
         {sublabel}
       </SvgText>
     </Svg>
@@ -116,23 +129,27 @@ export function GaugeMeter({ pct, size = 180, currentM = 0, targetM = 0 }) {
   const pctNum = Math.round(Math.min(pct, 9.99) * 100);
 
   return (
-    <Svg width={size} height={size}>
-      <Path d={arcPath(startAngle, startAngle + maxAngle)} stroke="#1E293B" strokeWidth={strokeW} fill="none" strokeLinecap="round" />
-      {progAngle > 1 && (
-        <Path d={arcPath(startAngle, startAngle + progAngle)} stroke={color} strokeWidth={strokeW} fill="none" strokeLinecap="round" />
-      )}
-      <SvgText x={cx} y={cy - 8} textAnchor="middle" fontSize={size * 0.17} fontWeight="900" fill={color} fontFamily="System">
-        {pctNum}%
-      </SvgText>
-      <SvgText x={cx} y={cy + 13} textAnchor="middle" fontSize={size * 0.072} fill={txt2} fontFamily="System">
-        استعداد تقاعدي
-      </SvgText>
-      {currentM > 0 && targetM > 0 && (
-        <SvgText x={cx} y={cy + 30} textAnchor="middle" fontSize={size * 0.063} fill="#475569" fontFamily="System">
-          {Math.round(currentM)} / {targetM} شهر
-        </SvgText>
-      )}
-    </Svg>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={{ position: 'absolute' }}>
+        <Path d={arcPath(startAngle, startAngle + maxAngle)} stroke="#1E293B" strokeWidth={strokeW} fill="none" strokeLinecap="round" />
+        {progAngle > 1 && (
+          <Path d={arcPath(startAngle, startAngle + progAngle)} stroke={color} strokeWidth={strokeW} fill="none" strokeLinecap="round" />
+        )}
+      </Svg>
+      <View style={{ alignItems: 'center' }}>
+        <Text style={{ fontSize: size * 0.17, fontFamily: 'Cairo_900Black', color, lineHeight: size * 0.2 }}>
+          {pctNum}%
+        </Text>
+        <Text style={{ fontSize: size * 0.072, fontFamily: 'Cairo_600SemiBold', color: txt2, textAlign: 'center' }}>
+          استعداد تقاعدي
+        </Text>
+        {currentM > 0 && targetM > 0 && (
+          <Text style={{ fontSize: size * 0.063, fontFamily: 'Cairo_400Regular', color: '#475569', textAlign: 'center', marginTop: 2 }}>
+            {Math.round(currentM)} / {targetM} شهر
+          </Text>
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -178,7 +195,7 @@ export function AreaChart({ points, width = 320, height = 160, color = gold, tar
         </SvgText>
       ))}
       {xIdxs.map(i => (
-        <SvgText key={i} x={px(i)} y={height - 5} textAnchor="middle" fontSize="8" fill={txt2} fontFamily="System">
+        <SvgText key={i} x={px(i)} y={height - 5} textAnchor="middle" fontSize="8" fill={txt2} fontFamily="Cairo_400Regular">
           {i === 0 ? 'الآن' : i === points.length - 1 ? 'التقاعد' : `+${points[i].year}س`}
         </SvgText>
       ))}
@@ -218,17 +235,21 @@ export function DonutChart({ segments, size = 160, label = '', sublabel = '' }) 
   });
 
   return (
-    <Svg width={size} height={size}>
-      <Circle cx={cx} cy={cy} r={r} stroke="#1E293B" strokeWidth="12" fill="none" />
-      {paths.map((p, i) => (
-        <Path key={i} d={p.d} stroke={p.color} strokeWidth={p.strokeW} fill="none" strokeLinecap="butt" />
-      ))}
-      <SvgText x={cx} y={cy - 4} textAnchor="middle" fontSize="18" fontWeight="900" fill={gold} fontFamily="System">
-        {label}
-      </SvgText>
-      <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize="9" fill={txt2} fontFamily="System">
-        {sublabel}
-      </SvgText>
-    </Svg>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={{ position: 'absolute' }}>
+        <Circle cx={cx} cy={cy} r={r} stroke="#1E293B" strokeWidth="12" fill="none" />
+        {paths.map((p, i) => (
+          <Path key={i} d={p.d} stroke={p.color} strokeWidth={p.strokeW} fill="none" strokeLinecap="butt" />
+        ))}
+      </Svg>
+      <View style={{ alignItems: 'center' }}>
+        <Text style={{ fontSize: 18, fontFamily: 'Cairo_900Black', color: gold, lineHeight: 22 }}>
+          {label}
+        </Text>
+        <Text style={{ fontSize: 9, fontFamily: 'Cairo_400Regular', color: txt2, textAlign: 'center' }}>
+          {sublabel}
+        </Text>
+      </View>
+    </View>
   );
 }

@@ -41,17 +41,6 @@
       "moyasarPublishableKey": "pk_test_REPLACE_WITH_YOUR_KEY",
       "reportPriceSAR": 9.99
     },
-    "plugins": [
-      "expo-sharing",
-      "expo-web-browser",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#0F172A",
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 200
-        }
-      ]
-    ]
+    "plugins": []
   }
 }

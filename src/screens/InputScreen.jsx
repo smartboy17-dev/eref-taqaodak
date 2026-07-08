@@ -11,10 +11,8 @@ const { width } = Dimensions.get('window');
 const STORAGE_KEY = '@eref_input_v1';
 
 const SYS_ICONS = {
-  'تأمينات - قطاع حكومي': '🏛️',
-  'تأمينات - قطاع خاص': '🏢',
-  'تقاعد مدني': '📋',
-  'تقاعد عسكري': '⚔️',
+  'قطاع خاص | أنظمة العمل': '🏢',
+  'قطاع عام | أنظمة التقاعد المدني': '🏛️',
   'اشتراك اختياري': '💎',
 };
 
@@ -44,7 +42,7 @@ export default function InputScreen({ navigation, route }) {
   const [rd, setRd] = useState('');
   const [deps, setDeps] = useState(0);
   const [periods, setPeriods] = useState([
-    { id: 1, sy: 'تأمينات - قطاع حكومي', sd: '', ed: '', ac: false, sl: 0, cal: 'g' },
+    { id: 1, sy: 'قطاع خاص | أنظمة العمل', sd: '', ed: '', ac: false, sl: 0, cal: 'g' },
   ]);
   const [salary, setSalary] = useState('');
 
@@ -96,7 +94,7 @@ export default function InputScreen({ navigation, route }) {
   }, [bd, rd, deps, periods, salary]);
 
   const addPeriod = () =>
-    setPeriods(p => [...p, { id: Date.now(), sy: 'تأمينات - قطاع حكومي', sd: '', ed: '', ac: false, sl: 0, cal: 'g' }]);
+    setPeriods(p => [...p, { id: Date.now(), sy: 'قطاع خاص | أنظمة العمل', sd: '', ed: '', ac: false, sl: 0, cal: 'g' }]);
 
   const updatePeriod = (id, field, val) =>
     setPeriods(p => p.map(x => x.id === id ? { ...x, [field]: val } : x));
@@ -161,7 +159,7 @@ export default function InputScreen({ navigation, route }) {
   const clearData = () =>
     Alert.alert('مسح البيانات', 'هل تريد مسح كل البيانات المحفوظة؟', [
       { text: 'إلغاء', style: 'cancel' },
-      { text: 'مسح', style: 'destructive', onPress: () => { setBd(''); setRd(''); setDeps(0); setSalary(''); setPeriods([{ id: 1, sy: 'تأمينات - قطاع حكومي', sd: '', ed: '', ac: false, sl: 0, cal: 'g' }]); AsyncStorage.removeItem(STORAGE_KEY); } },
+      { text: 'مسح', style: 'destructive', onPress: () => { setBd(''); setRd(''); setDeps(0); setSalary(''); setPeriods([{ id: 1, sy: 'قطاع خاص | أنظمة العمل', sd: '', ed: '', ac: false, sl: 0, cal: 'g' }]); AsyncStorage.removeItem(STORAGE_KEY); } },
     ]);
 
   const aEnd = rd || new Date().toISOString().split('T')[0];
@@ -231,7 +229,7 @@ export default function InputScreen({ navigation, route }) {
           {/* ═══ الخطوة 2 ═══ */}
           {step === 1 && (
             <View>
-              <Text style={s.sectionHint}>أضف جميع فترات الاشتراك في التأمينات أو التقاعد المدني</Text>
+              <Text style={s.sectionHint}>أضف جميع فترات خدمتك — قطاع خاص (أنظمة العمل) أو قطاع عام (أنظمة التقاعد المدني) أو اشتراك اختياري</Text>
               {periods.map((p, i) => (
                 <View key={p.id} style={s.periodCard}>
                   <View style={s.periodHeader}>
@@ -334,7 +332,7 @@ export default function InputScreen({ navigation, route }) {
           {/* ═══ الخطوة 3 ═══ */}
           {step === 2 && (
             <View>
-              <Field label="💰 آخر راتب أساسي (ر.س)" hint="الراتب المعتمد لاحتساب المعاش — الحد الأعلى 45,000 ر.س">
+              <Field label="💰 الراتب الأساسي المعتمد (ر.س)" hint="للقطاع العام: آخر راتب أساسي • للقطاع الخاص: متوسط آخر 24 شهر (يُستخدم هنا آخر راتب تقريباً) — الحد الأعلى 45,000 ر.س">
                 <TextInput style={[s.input, s.inputLarge]} value={salary} onChangeText={setSalary} placeholder="أدخل الراتب" placeholderTextColor="#475569" keyboardType="numeric" />
               </Field>
 
@@ -358,7 +356,7 @@ export default function InputScreen({ navigation, route }) {
 
               <View style={s.disclaimerBox}>
                 <Text style={s.disclaimerTxt}>
-                  💡 الأرقام تقديرية بناءً على نظام م/33 وقرار 3/7/2024م. الراتب المعتمد = متوسط آخر 24 شهر (نُستخدم آخر راتب تقريباً).
+                  💡 الأرقام تقديرية بناءً على نظام م/33 وقرار 3/7/2024م.{'\n'}• القطاع العام: الراتب المعتمد = آخر راتب أساسي.{'\n'}• القطاع الخاص: الراتب المعتمد = متوسط آخر 24 شهر (نستخدم آخر راتب تقريباً).
                 </Text>
               </View>
             </View>
@@ -474,7 +472,7 @@ const s = StyleSheet.create({
   clearTxt: { fontSize: 12, color: '#EF4444', fontFamily: 'Cairo_600SemiBold' },
   progressBg: { height: 3, backgroundColor: '#111830', marginHorizontal: 20, borderRadius: 2 },
   progressFg: { height: 3, backgroundColor: '#6366F1', borderRadius: 2 },
-  stepHint: { fontSize: 11, color: '#475569', textAlign: 'center', marginTop: 6, marginBottom: 2 },
+  stepHint: { fontSize: 11, color: '#475569', textAlign: 'center', marginTop: 6, marginBottom: 2, fontFamily: 'Cairo_400Regular' },
   scroll: { padding: 20, paddingBottom: 50 },
 
   dualLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
@@ -483,18 +481,18 @@ const s = StyleSheet.create({
   calBtnActive: { backgroundColor: '#6366F1' },
   calBtnTxt: { fontSize: 12, color: '#64748B', fontFamily: 'Cairo_700Bold' },
   calBtnTxtActive: { color: '#07091C' },
-  calHint: { fontSize: 10, color: '#10B981', marginTop: 4, textAlign: 'right' },
+  calHint: { fontSize: 10, color: '#10B981', marginTop: 4, textAlign: 'right', fontFamily: 'Cairo_400Regular' },
   fieldLabel: { fontSize: 13, fontFamily: 'Cairo_700Bold', color: '#94A3B8', marginBottom: 0 },
-  fieldHint: { fontSize: 10, color: '#475569', marginBottom: 5 },
-  input: { backgroundColor: '#111830', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, color: '#F1F5F9', fontSize: 15, borderWidth: 1, borderColor: '#1C2848', textAlign: 'right' },
+  fieldHint: { fontSize: 10, color: '#475569', marginBottom: 5, fontFamily: 'Cairo_400Regular' },
+  input: { backgroundColor: '#111830', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, color: '#F1F5F9', fontSize: 15, borderWidth: 1, borderColor: '#1C2848', textAlign: 'right', fontFamily: 'Cairo_400Regular' },
   inputErr: { borderColor: '#EF4444' },
   inputLarge: { fontSize: 26, fontFamily: 'Cairo_900Black', color: '#6366F1', textAlign: 'center', paddingVertical: 20, borderColor: '#6366F150' },
-  sectionHint: { fontSize: 12, color: '#94A3B8', marginBottom: 16, lineHeight: 20 },
+  sectionHint: { fontSize: 12, color: '#94A3B8', marginBottom: 16, lineHeight: 20, fontFamily: 'Cairo_400Regular' },
 
   infoCard: { backgroundColor: '#111830', borderRadius: 14, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#1C2848' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5 },
   infoIcon: { fontSize: 14, width: 22 },
-  infoLabel: { fontSize: 12, color: '#64748B', flex: 1 },
+  infoLabel: { fontSize: 12, color: '#64748B', flex: 1, fontFamily: 'Cairo_400Regular' },
   infoVal: { fontSize: 12, fontFamily: 'Cairo_700Bold', color: '#6366F1' },
 
   depsRow: { flexDirection: 'row', gap: 8 },
@@ -502,7 +500,7 @@ const s = StyleSheet.create({
   depBtnActive: { backgroundColor: '#6366F115', borderColor: '#6366F1' },
   depBtnTxt: { fontSize: 11, color: '#64748B', fontFamily: 'Cairo_600SemiBold' },
   depBtnTxtActive: { color: '#6366F1', fontFamily: 'Cairo_700Bold' },
-  depsNote: { fontSize: 11, color: '#10B981', marginTop: 8, marginBottom: 4 },
+  depsNote: { fontSize: 11, color: '#10B981', marginTop: 8, marginBottom: 4, fontFamily: 'Cairo_400Regular' },
 
   periodCard: { backgroundColor: '#111830', borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: '#1C2848' },
   periodHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
@@ -524,14 +522,14 @@ const s = StyleSheet.create({
   totalVal: { fontSize: 18, color: '#6366F1', fontFamily: 'Cairo_900Black' },
 
   salCard: { backgroundColor: '#10B98110', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#10B98130', alignItems: 'center', marginBottom: 16 },
-  salLabel: { fontSize: 11, color: '#64748B', marginBottom: 4 },
+  salLabel: { fontSize: 11, color: '#64748B', marginBottom: 4, fontFamily: 'Cairo_400Regular' },
   salVal: { fontSize: 28, fontFamily: 'Cairo_900Black', color: '#10B981' },
-  capNote: { fontSize: 11, color: '#6366F1', marginTop: 6 },
+  capNote: { fontSize: 11, color: '#6366F1', marginTop: 6, fontFamily: 'Cairo_400Regular' },
 
   summaryCard: { backgroundColor: '#111830', borderRadius: 14, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: '#1C2848' },
   summaryTitle: { fontSize: 13, fontFamily: 'Cairo_700Bold', color: '#6366F1', marginBottom: 12 },
   disclaimerBox: { backgroundColor: '#111830', borderRadius: 10, padding: 12, marginBottom: 10, borderRightWidth: 3, borderRightColor: '#6366F1', borderWidth: 1, borderColor: '#1C2848' },
-  disclaimerTxt: { fontSize: 11, color: '#64748B', lineHeight: 18 },
+  disclaimerTxt: { fontSize: 11, color: '#64748B', lineHeight: 18, fontFamily: 'Cairo_400Regular' },
 
   nextBtn: { backgroundColor: '#6366F1', borderRadius: 18, paddingVertical: 18, alignItems: 'center', marginTop: 10, shadowColor: '#6366F1', shadowOpacity: 0.35, shadowRadius: 12, elevation: 6 },
   nextBtnTxt: { fontSize: 16, fontFamily: 'Cairo_900Black', color: '#07091C' },
